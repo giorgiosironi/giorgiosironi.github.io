@@ -1,0 +1,25 @@
+- title, Onebip logo, name
+- we need to write tests! let's hug trees
+-- but we need to know how
+- story 1: getting a screenshot automatically
+-- so that: to check it's not badly displayed
+JSON Wire Protocol Selenium 2, PHPUnit_Selenium in my case
+GET /session/:sessionId/screenshot
+- story 2: screenshots on multiple browser 
+-- so that: since layout and JavaScript are sensitive
+-- SauceLabs
+--- Testing machine -> Sauce cloud -> integration server with public hostname
+- story 3: make a machine check instead of a human
+-- so that: we do not waste time in repetitive work
+-- this is the hard part
+-- step 3.1: generate a reference image vs. checking
+-- STORE_SCREENSHOTS=1 vendor/bin/phpunit spec/crossbrowser/PaymentPageDesktopTest.php
+-- vendor/bin/phpunit spec/crossbrowser/PaymentPageDesktopTest.php 
+-- ScreenshotAnalysis^-Storage,Assertion
+-- check(string label, callback screenshotGenerator)
+-- step 3.2: compare
+-- convert screenshot.png screenshot.pnm
+-- imgcmp -f reference.pnm -F screenshot.png -m mae | paste -sd+ | bc 
+-- if > 0.0001, fail
+-- not pixel-by-pixel perfection, since browsers sometimes flicker the colors (e.g. Android)
+- results

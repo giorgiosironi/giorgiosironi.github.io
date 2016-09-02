@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Property-based testing: extending examples to a specification</title>
+
+		<meta name="description" content="Property-based testing lets the programmer generate a set of possible inputs to the System Under Test, and check invariant properties that should always be satisfied.
+        ">
+		<meta name="author" content="Giorgio Sironi">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/white.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Property-based testing</h1>
+					<h3>Extending examples to a specification</h3>
+					<p>
+						<small><a href="http://giorgiosironi.com">Giorgio Sironi</a> / <a href="http://twitter.com/giorgiosironi">@giorgiosironi</a></small>
+					</p>
+				</section>
+
+				<section>
+                    <section>
+                        <h2>Testing in a nutshell</h2>
+                        <ol>
+                            <li><strong>Given</strong> some object in a certain state</li>
+                            <li><strong>When</strong> I call some methods</li>
+                            <li><strong>Then</strong> something happens</li>
+                        </ol>
+                        <aside class="notes">
+                            Also known as Arrange-Act-Assert in pre-BDD era, automated testing nowadays starts from an initial conditions, exercises the System Under Test and performs checks over the output, or the state, or the history of the System.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Example-based testing in a nutshell</h2>
+                        <ol>
+                            <li><strong>Given</strong> some programmer-chosen input</li>
+                            <li><strong>When</strong> I call some methods</li>
+                            <li><strong>Then</strong> the result is equal to an expected output I defined</li>
+                        </ol>
+                        <aside class="notes">
+                            An example start from a known input decided and written down by the programmer. It performs some actions over the System Under Test, and executes a check over the output comparing it to an expected output that is a big part of the example.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Input and output versus state</h2>
+                        &lt;next_state, output&gt; = f(&lt;current_state, input&gt;)
+                        <aside class="notes">
+                            Every discrete-time stateful system can be viewed as a pure function that takes the current state and a new input to produce the next state and an output. Therefore when I talk about input/output there is no loss of generality towards stateful systems. This is a notion that comes from sequential circuits, as a proof of its ubiquity.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Example-based test</h2>
+                        <pre><code data-trim class="java">
+interface Price {
+    public boolean contains(Money money);
+    public Money min();
+    public Money max();
+    // ...
+}
+
+class SingleAmount implements Price { /* ... */ }
+class ContinuousRangeOfAmounts implements Price { /* ... */ }
+class SetOfAmounts implements Price { /* ... */ }
+                        </code></pre>
+                        <aside class="notes">
+                            Here is a Price interface implementes by two classes SingleAmount (representing a fixed price) and ContinuousRangeOfAmounts (representing an interval of prices). SetOfAmounts composes them to build an arbitrary set of possible prices.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Example-based test</h2>
+                        <pre><code data-trim class="java">
+// given
+Price single = new SingleAmount(new Money("2.00/EUR"));
+Price range = new ContinuousRangeOfAmounts(
+    new Money("1.50/EUR"),
+    new Money("2.10/EUR")
+);
+SetOfAmounts set = new SetOfAmounts();
+// when
+set.add(single);
+set.add(range);
+// then
+assertTrue(set.contains("1.50/EUR"));
+assertTrue(set.contains("2.00/EUR"));
+assertFalse(set.contains("2.11/EUR"));
+                        </code></pre>
+                        <aside class="notes">
+                            An example usage of SetOfAmounts, which has to merge different Prices instances in order keep the simplest possible representation of the set. For example, in this case `single` is contained in `range` and so it does not need to be stored in the set anymore after `range` is added.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>The perils of examples</h2>
+                        <ul>
+                            <li class="fragment">TDD is a <em>design</em> tool, not much a <em>testing</em> tool. Coverage of <em>inputs</em>?</li>
+                            <li class="fragment">When do you stop adding tests?</li>
+                            <li class="fragment">How do you maintain all these tests?</li>
+                            <li class="fragment">How do I overcome my bias to choose known corner cases?</li>
+                        </ul>
+                        <aside class="notes">
+                            There are many issues with testing only with examples, even when using a test-first and test-driven approach. TDD is a design tool that gives us feedback on the design but it's not a complete solution to testing over complicated systems.
+                            Let's choose to add many examples to raise not only the code coverage but also the coverage of possible inputs that could break our system, and of the combinatorial paths that they can take inside the system.
+                            Notwithstanding the time taken to write all these tests, how do we maintain it when some specification changes?
+                            Moreover, how do we choose unusual combination of inputs? There are many cases we don't even think about.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Property-based testing in a nutshell</h2>
+                        <ul>
+                            <li class="fragment"><strong>Given</strong> a random uniform input</li>
+                            <li class="fragment"><strong>When</strong> I drive the code with this input</li>
+                            <li class="fragment"><strong>Then</strong> some property of the output is always true</li>
+                        </ul>
+                        <aside class="notes">
+                            In property-based testing we cannot test for all inputs, so we take a large random sample of possible input and generate one test for each of them. After exercising the System Under Test, we verify properties that should always be true no matter the input.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Property-based test</h2>
+
+                        <pre><code data-trim contenteditable>
+// given
+List&lt;Price&gt; prices = randomSequence(
+    SingleAmount.class,
+    ContinuousRangeOfAmounts.class
+);
+//when
+SetOfAmounts set = new SetOfAmounts();
+for (Price p: prices) {
+    set.add(p);
+}
+// then
+for (Price p: prices) {
+    assertTrue(
+        set.contains(p),
+        "Price " + p " is not contained in the final set"
+    );
+}
+                        </code></pre>
+                        <aside class="notes">
+                            This time we build a test by generating a random sequence of prices, where each element of the list can be an instance of SingleAmount and ContinuousRangeOfAmounts. The sequence has a random number of elements too. After we have added all the elements to the set, we can check that each of them is still contained - an invariant property that will always be true no matter the input, given a correct implementation. We are testing that our aggressive optimizations that try to store the smallest representation for the set do not lose information.
+                            We can think of many other properties here: when it grows, the set must always contain any value that it was containing before. After each iteration, the minimum of the set should be less than or equal to the maximum. No matter the order in which we add a given sequence of prices to the set, the end result should always be the same.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>What do we get in return?</h2>
+
+                        <ul>
+                            <li class="fragment">Higher, uniform coverage of inputs and paths</li>
+                            <li class="fragment">Writing and maintaining tests is less time consuming</li>
+                            <li class="fragment">Even more insights on the specification that examples</li>
+                        </ul>
+                        <aside class="notes">
+                            You do not just cover more inputs but can also execute wildly different paths inside the code depending on them. The sample is more uniform than "the next tests that come to mind". You write a single test but can execute it hundreds of times with different inputs at no cost. Finally, properties improve on TDD feedback by giving you insight on the specification and may lead you to discover inconsistent requirements or counterexamples that break the assumptions you were making.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <img src="img/dijkstra.jpg" alt="Those bugs, you're never sure there aren't any" />
+
+                        <aside class="notes">
+                            Of course, you get the help of the machine in generating all those tests. Property-based tests are no good for documentation, but they move towards the proof-side of the spectrum. They start from something that worked (examples) and try to build on them to get a more comprehensive coverage. You can't do full combinatorial testing, or cover all inputs like in a proof; but proofs only worked in limited contexts anyway...
+                        </aside>
+                    </section>
+				</section>
+
+				<section>
+                    <section>
+                        <img src="img/shakespeare.jpg" alt="How to find properties, that is the question" />
+                        <aside class="notes">
+                            The strongest impediment to adoption of property-based testing is not lack of tools, but how to come up with properties for your code. We will go through several examples.
+                        </aside>
+
+                    </section>
+
+                    <section>
+                        <h2>Postconditions</h2> 
+                        <img src="img/property_postcondition.png" />
+                        <aside class="notes">
+                            We can check some properties which are always valid on the output. The output of the sorting function should always consist of in-order elements. This is not a sufficient property however: an incorrect sorting function could discard elements.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Invariants</h2> 
+                        <img src="img/property_invariant.png" />
+                        <aside class="notes">
+                            We can check some properties valid on the input are preserved on the output, for example the actual elements not changing when we test a sort function.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Inverse functions</h2>
+                        <img src="img/property_inverse.png" />
+                        <aside class="notes">
+                            We can invert the function, and test that the inverse of the output is the original input. For example, we can test square root algorithms by using multiplication over their result.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Oracle</h2>
+                        <img src="img/property_test_oracle.png" />
+                        <aside class="notes">
+                            We can compare the result with another implementation, which is proven to be correct but too slow or in any case not feasible to use in production systems. For example, a standard sort function and a new one that we are designing (this reasoning is valid for any algorithm.)
+                        </aside>
+                    </section>
+				</section>
+
+				<section>
+                    <section>
+                        <h2>Examples</h2>
+                        <aside class="notes">
+                            Three examples, the first two taken from production code of Onebip.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Testing grouping APIs</h2>
+                        <img src="img/testing_panel.png" />
+                        <aside class="notes">
+                            This panel shows some sample conversion rates between users who open a payment page and actually proceed with the payment. The data can be grouped according to many dimensions: country, price and many others not shown here.
+                            The API for this report has responses consisting of entire kilobytes of JSON: testing correct results while grouping for different dimensions is very time consuming and painful, as every time a column is added all the responses change.
+                            With property-based testing, you can instead verify properties of the output such as the total of each column do not change no matter the grouping you choose.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Testing grouping APIs</h2>
+                        <pre><code data-trim class="php">
+$this
+    -&gt;forAll(
+        Generator\set(Generator\elements(['country', 'price', ...]))
+    )
+    -&gt;then(function($fields) {
+        $response = $this-&gt;groupBy($fields);
+        $landed = 0;
+        foreach ($response['elements'] as $row) {
+            $landed += $row['landed'];
+        }
+        $this-&gt;assertEquals(
+            $totalExpectedLanded,
+            $landed
+        );
+    });
+                        </code></pre>
+                        <aside class="notes">
+                            This was one of the bugs in the PHP DateTime library that we found with property-based testing. In certain conditions such as the UTC timezone, adding a number of days to a data that passes over February 29th results in a off-by-one error as one day is skipped or added. By testing our UTCDateTime class that delegates to the language's DateTime we found the bug and inserted a work around.
+                            In *TDD* you often say "you don't test the language + operator", but with your *testing* hat you may.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Testing a DateTime library</h2>
+                        <pre><code data-trim class="php">
+$this
+    -&gt;forAll(
+        Generator\choose(2000, 2020),
+        Generator\choose(0, 364),
+        Generator\choose(0, 364)
+    )
+    -&gt;then(function($year, $dayOfYear, $anotherDayOfYear) {
+        $day = UTCDateTime::fromZeroBasedDayOfYear(
+            $year, $dayOfYear);
+        $anotherDay = UTCDateTime::fromZeroBasedDayOfYear(
+            $year, $anotherDayOfYear);
+        $this-&gt;assertEquals(
+            abs($dayOfYear - $anotherDayOfYear) * 86400,
+            abs($day-&gt;differenceInSeconds($anotherDay)),
+            "Days of the year $year, ..."
+        );
+    });
+                        </code></pre>
+                        <aside class="notes">
+                            This was one of the bugs in the PHP DateTime library that we found with property-based testing. In certain conditions such as the UTC timezone, adding a number of days to a data that passes over February 29th results in a off-by-one error as one day is skipped or added. By testing our UTCDateTime class that delegates to the language's DateTime we found the bug and inserted a work around.
+                            In *TDD* you often say "you don't test the language + operator", but with your *testing* hat you may.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Shrinking</h2>
+                        <img src="img/shrinking.png" />
+                        <aside class="notes">
+                            When a randomized input produces a test failure, it is then simplified to run the test again and again until the new input causes the test to pass. The goal of this <em>shrinking</em> process is to produce the simplest input that causes a failing test instead of a purely random failure, and to possibly make the discovered bug obvious. In the example, we immediately discovered the problem was related to leap years and February 29th even if the first input that caused the test to fail was probably something like the pair January 25th-August 19th.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Testing images</h2>
+                        <table style="border: none; text-align: center;">
+                            <tr>
+                                <td style="text-align: center; width: 33%; ">
+                                    <img src="img/testing_images.jpg" style="width: 90%; border: none;" />
+                                </td>
+                                <td style="width: 66%">
+                                    <img src="img/testing_images.jpg" style="width: 90%; border: none" />
+                                </td>
+                            </tr>
+                        </table>
+                        <aside class="notes">
+                            How I went about testing image manipulation code such as resizing: painfully generating and maintaining reference images to use as input and expected output.
+                            How I go now: use inverse operations such as resizing by 200% and 50% to avoid having to maintain expected outputs but only using the input itself as a reference.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Testing images</h2>
+                        <pre><code data-trim class="php">
+$this
+    -&gt;forAll(
+        Generator\image(
+            Generator\choose(0, 1024),
+            Generator\choose(0, 768)
+        ),
+    )
+    -&gt;then(function($inputImage) {
+        $this-&gt;assertImagesAreEqual(
+            $image-&gt;resize(0.5)-&gt;resize(0.5),
+            $image-&gt;resize(0.25)
+        );
+    });
+                        </code></pre>
+                        <aside class="notes">
+                            This was one of the bugs in the PHP DateTime library that we found with property-based testing. In certain conditions such as the UTC timezone, adding a number of days to a data that passes over February 29th results in a off-by-one error as one day is skipped or added. By testing our UTCDateTime class that delegates to the language's DateTime we found the bug and inserted a work around.
+                            In *TDD* you often say "you don't test the language + operator", but with your *testing* hat you may.
+                        </aside>
+                    </section>
+
+
+				</section>
+
+                <section>
+                    <h2>A survey of Quickchecks by MacIver</h2>
+                    <table style="float: left;">
+                        <tr>
+                            <td>C</td>
+                            <td><a href="https://github.com/silentbicycle/theft">theft</a></td>
+                        </tr>
+                        <tr>
+                            <td>C++</td>
+                            <td><a href="https://github.com/grogers0/CppQuickCheck">CppQuickCheck</a></td>
+                        </tr>
+                        <tr>
+                            <td>Clojure</td>
+                            <td><a href="https://github.com/clojure/test.check">test.check</a></td>
+                        </tr>
+                        <tr>
+                            <td>Coq</td>
+                            <td><a href="https://github.com/QuickChick/QuickChick">QuickChick</a></td>
+                        </tr>
+                        <tr>
+                            <td>F#</td>
+                            <td><a href="https://github.com/fscheck/FsCheck">FsCheck</a></td>
+                        </tr>
+                        <tr>
+                            <td>Haskell</td>
+                            <td><a href="https://hackage.haskell.org/package/QuickCheck">Quickcheck</a></td>
+                        </tr>
+                        <tr>
+                            <td>JavaScript</td>
+                            <td><a href="https://github.com/jsverify/jsverify">jsverify</a></td>
+                        </tr>
+                    </table>
+                    <table style="float: left;">
+                        <tr>
+                            <td>PHP</td>
+                            <td><a href="https://github.com/giorgiosironi/eris">Eris</a></td>
+                        </tr>
+                        <tr>
+                            <td>Python</td>
+                            <td><a href="http://hypothesis.readthedocs.org/en/latest/">Hypothesis</a></td>
+                        </tr>
+                        <tr>
+                            <td>Ruby</td>
+                            <td><a href="https://github.com/abargnesi/rantly">Rantly</a></td>
+                        </tr>
+                        <tr>
+                            <td>Rust</td>
+                            <td><a href="https://github.com/BurntSushi/quickcheck">Quickcheck</a></td>
+                        </tr>
+                        <tr>
+                            <td>Scala</td>
+                            <td><a href="https://www.scalacheck.org/">ScalaCheck</a></td>
+                        </tr>
+                        <tr>
+                            <td>Swift</td>
+                            <td><a href="https://github.com/typelift/SwiftCheck">Swiftcheck</a></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <aside class="notes">
+                        QuickCheck, the original Haskell library for property-based testing, has been ported to many different programming languages. This is a selected list with only the full-featured implementations.
+                    </aside>
+                </section>
+
+				<section style="text-align: left;">
+					<h1>References</h1>
+					<p>
+                    - <a href="http://www.giorgiosironi.com/2015/06/property-based-testing-primer.html">A summary blog post</a> <br />
+                    - <a href="http://fsharpforfunandprofit.com/posts/property-based-testing-2/">Choosing properties for property-based testing</a> <br />
+                    - <a href="http://www.drmaciver.com/2015/09/a-survey-of-quickchecks/">A survey of Quickchecks</a><br />
+					</p>
+                    <aside class="notes">
+                        My post is a written introduction to property-based testing that can be read in a few minutes.
+                        The article on choosing properties is a great guide for finding properties in any code.
+                        A survey of Quickchecks shows you the different libraries that each language provides for generation of inputs and verification of properties.
+                    </aside>
+				</section>
+
+				<section style="text-align: left;">
+					<h1>Acknowledgements</h1>
+                    <p>
+                    Images on how to find properties by <a href="http://fsharpforfunandprofit.com/about/">scottw</a>
+					</p>
+				</section>
+
+                <section>
+                    <h1>Thanks!</h1>
+                    <aside class="notes">
+                        After all, on a Saturday you're taking the time and energy to improve our profession.
+                    </aside>
+                </section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

@@ -1,0 +1,19 @@
++ complementary tool, not alternative tool
+++ non servono documentazione
+++ macchina property-based vs. uomo example-based
++ spendere Dijkstra: riferimento storico al testing by example come insufficient
+++ ha funzionato contro la verifica dei programmi
+++ lo spettro dagli esempi alle proof, da rappresentare
++ bello l'input coverage
++ marcatura fra design tool vs testing tool
++ syntax highlighting su motivating example 1/2
++ piú piano su Price
++ immagine di f(state, input)
++ riformattare codice senza barre di scorrimento
+++ given/when/then come commenti, anche nell'esempio precedente
++ shakespeare image on "how to find properties"
++ oracle instead of multiple paths
++ post conditions as the 4th pattern for finding properties
++ accorciare testing grouping apis
+++ insert code of the test
++ made up test for images

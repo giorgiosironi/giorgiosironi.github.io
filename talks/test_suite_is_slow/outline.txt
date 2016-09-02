@@ -1,0 +1,17 @@
+- 10 minutes build
+-- in particular, test
+-- in PHP no compilation, just setup of databases and maybe local deploy before test starts
+- strategy: unit, integration, acceptance
+-- faster feedback from unit, then the others
+-- related: fakes for external resources or systems
+-- the philosophy of testing behavior at unit level, and wiring at integration/acceptance
+- strategy: profiling
+-- --log-junit
+-- XDebug easy or your preferred tool
+-- e.g. a logging function was making an exec() call to find out the host
+- strategy: hardware
+-- good investment (Dell XPS)
+-- may not solve CI
+- strategy: parallelism 
+-- leveraging multiple cores and powerful I/O (SSD)
+-- Paratest, with test tokens

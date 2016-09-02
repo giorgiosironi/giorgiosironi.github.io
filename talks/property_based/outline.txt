@@ -1,0 +1,43 @@
+- motivating example
+-- SetOfAmounts built from SingleAmount and ContinuousRangeOfAmounts
+- code sample
+-- simple unit test for SetOfAmounts::add
+- testing in a nutshell
+-- Given (Arrange)
+-- When (Act)
+-- Then (Assert)
+- example-based testing in a nutshell
+-- programmer-chosen input 
+-- act on the code calling one or more functions/methods
+-- compare result against an expected one computed by hand
+-- note: (state, input) -> (next_state, output) means we can view state as an input
+- several problems on our motivating example
+-- TDD is a design tool, not much a testing tool, coverage of inputs?
+-- when do you stop?
+-- bias of the programmer to choose known corner cases. What about unknown ones?
+- property-based testing in a nutshell
+-- large-[enough] random sample of inputs
+-- drive the code by calling functions/methods
+-- assert the validity of properties on the result
+- returning to the motivating example
+-- generate a sample of SingleAmount/ContinuousRangeOfAmounts
+-- add them one at the time to the empty Set
+-- check that each of the ones you have added is still contained
+- code sample for the new motivating example
+- what does this get us?
+-- more coverage of inputs and "provoked paths"
+-- good insight on specifications, finding inconsistencies
+-- less time to write and maintain all those tests
+- how to find properties (non-exhaustive list)
+-- multiple paths to arrive at the same result (different sort implementations)
+-- inverse functions (sum and subtraction)
+-- invariants on the input (e.g. monotonicity)
+- example: testing grouping APIs
+- example: testing libraries (DateTime)
+- example: testing images
+-- scale up an image and scale it down, compare within an error (inverse function)
+-- no need for generated-by-hand references
+- references
+-- A primer by me http://www.giorgiosironi.com/2015/06/property-based-testing-primer.html
+-- Choosing properties for property-based testing http://fsharpforfunandprofit.com/posts/property-based-testing-2/
+-- A survey of Quickchecks http://www.drmaciver.com/2015/09/a-survey-of-quickchecks/

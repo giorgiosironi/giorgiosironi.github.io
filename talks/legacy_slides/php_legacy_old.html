@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Presentation</title>
+
+        <meta charset='utf-8' />
+        <script
+            src='http://html5slides.googlecode.com/svn/trunk/slides.js'></script>
+        <link href='http://fonts.googleapis.com/css?family=Great+Vibes' rel='stylesheet' type='text/css' />
+
+    <style>
+        .slides.template-default > article:not(.nobackground):not(.biglogo) {
+            background: url(images/onebip-logo-small.gif) 670px 625px no-repeat !important;
+            background-color: white !important;
+        }
+
+        article.biglogo {
+            background: none !important;
+            background-color: white !important;
+        }
+
+        .slides.template-default > article.pattern_title {
+            background: url(images/himym.png) !important;
+            padding: 0px;
+        }
+        .slides.template-default > article.pattern_title div {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            text-align: center;
+            font-style: cursive;
+            font-family: 'Great Vibes', cursive;
+            font-size: 80px;
+            color: black;
+        }
+
+        .slides.template-default > article.pattern_explanation p {
+            font-size: 40px;
+            line-height: 1.2;
+            margin-top: 20px;
+        }
+
+
+    </style>
+    </head>
+
+    <body style='display: none'>
+
+        <section class='slides layout-regular template-default'>
+
+        <article class="biglogo">
+        <h1>
+            Accettare le eredità
+        </h1>
+        <p>
+        Giorgio Sironi
+        </p>
+<br />
+        <img src="images/onebip-logo.gif" width="596" height="160" />
+        </article>
+
+        <article>
+        <h3>
+            The problem
+        </h3>
+        <p>
+        Writing tests requires refactoring
+        </p>
+        <p>
+        Refactoring requires tests
+        </p>
+        </article>
+
+        <article>
+        <h3>
+            Here's what I'll show you
+        </h3>
+        <ul class="build">
+            <li>
+            Patterns: solutions to a problem in a context
+            </li>
+            <li>
+            Known and maybe novel (couldn't find them on the Internet)
+            </li>
+            <li>
+            By no means a complete list
+            </li>
+        </ul>
+
+        </article>
+
+        <article class="pattern_title nobackground">
+        <div>Characterization Test</div>
+        </article>
+
+        <article class="pattern_explanation">
+        <div class="build">
+            <p>Context: black box testing</p>
+            <p>Solution: break the chain by starting from very high-level tests</p>
+            <p>Advantage: no modification of existing code</p>
+            <p>Cost: setup and running time e.g. clean database aggressively, perform so many queries, assert on HTML, run with Selenium. Only high-level</p>
+        </div>
+        </article>
+
+        <article class="pattern_title nobackground">
+        <div>Extract and Override
+            <p>Too easy!</p>
+        </div>
+        </article>
+
+        <article class="pattern_title nobackground">
+        <div>Video Tape</div>
+        </article>
+        <article class="pattern_explanation">
+        <div class="build">
+            <p>Context: use cases are unknown</p>
+            <p>Solution: insert an object that registers HTTP request and responses, along with messages sent to the rest of the application
+            -- then you can write unit tests for these "controllers/adapters"
+            </p>
+            <p>Advantage: weights for test cases</p>
+            <p>Cost: data gathering time, legibility</p>
+        </div>
+        </article>
+        <article>
+        <pre>
+class Onebip_Tape
+{
+    public function record($response)
+    {
+        $this->log('Request headers', $_SERVER);
+        $this->log('$_GET', $_GET);
+        $this->log('$_POST', $_POST);
+        $this->log('Response headers', headers_list());
+        $this->log('Response body', $response);
+
+        return $response;
+    }
+}
+</pre>
+<pre>
+$recordingTape = new Onebip_Tape($filename);
+ob_start(array($recordingTape, 'record'));
+</pre>
+
+</article>
+<article class="pattern_title nobackground">
+<div>Sandbox Variable Space</div>
+</article>
+<article class="pattern_explanation">
+<p>Context: from script to class</p>
+<p>Solution: Provide a fake variable space</p>
+<p>Advantage: minimal modifications</p>
+<p>Cost: multiple steps</p>
+</article>
+<article>
+<pre>
+$_GET = ...
+$_POST = ...
+$_SERVER['REMOTE_ADDR'] = ...
+</pre>
+<pre>
+      public function ...()
+      {
+          $globalVariable = ...
+          include $scriptName;
+      }
+        </pre>
+
+</article>
+
+<article class="pattern_title nobackground">
+<div>Formal Transformation</div>
+</article>
+<article class="pattern_explanation">
+<p>Context: horizontal refactoring</p>
+<p>Solution: automated or manual checklist of substitution</p>
+<p>Advantage: consistency, speed</p>
+<p>Cost: no true automated refactoring in PHP, unreliable</p>
+</article>
+<article>
+<pre>
+sed -i -e 's/header(/$this->header(/g *.php
+sed -i -e 's/exit()/return/g' *.php
+sed -i -e 's/print(/$this->write(/g' *.php
+</pre>
+<p>git diff is your friend</p>
+</article>
+
+<article class="pattern_title nobackground">
+<div>Parallel Design</div>
+</article>
+<article class="pattern_explanation">
+<p>Context: big horizontal refactoring</p>
+<p>Solution: substitute one endpoint at the time, from a script to a class</p>
+<p>Advantage: multiple commits, small chunks over long time lower risk</p>
+<p>Cost: may never finish if you just leave it there</p>
+</article>
+<article>
+<pre>
+  .
+  ├── src
+  │   └── MyApi
+  │       └── Colors
+  │           └── Green.php
+  └── web
+      └── myapi
+              ├── blue.php
+              └── red.php
+      </pre>
+<p>.htaccess</p>
+<pre>
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule (.*) ../entry-point.php
+</pre>
+</article>
+
+<article>
+<h3>
+    Thank you!
+</h3>
+
+<ul>
+    <li>
+    Code from my work at <a href="http://corporate.onebip.com/blog">Onebip</li>
+        <li>
+        <a href="http://code.google.com/p/html5slides/">Slide template</a> by Google
+        </li>
+        <li>
+        The pattern title are in the style of <a href="http://en.wikipedia.org/wiki/How_I_Met_Your_Mother">HIMYM</a>
+        </li>
+    </ul>
+    </article>
+
+    </section>
+
+</body>
+</html>

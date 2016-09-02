@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+        <title>
+            CQRS and Domain Events for integration
+        </title>
+
+
+		<meta name="description" content="Discover how Command-Query Responsibility Segregation allowed to separate billing from reporting using different Bounded Contexts, applications and databases all tied together with Domain Events. ">
+		<meta name="author" content="Giorgio Sironi">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+        <style type="text/css">
+            .reveal h1
+            {
+                font-size: 140%;
+            }
+            .reveal h2
+            {
+                font-size: 130%;
+            }
+            .reveal li {
+                padding: 0.2em;
+            }
+            .reveal section code {
+                font-size: 130%;
+                line-height: 1.2;
+                margin-top: 30px;
+            }
+            .reveal table {
+                border-collapse: collapse;
+            }
+            .reveal td {
+                width: 50%;
+                border: 1px solid black;
+                padding: 0.2em;
+            }
+            .reveal img {
+                padding: 0.1em;
+            }
+            .reveal blockquote {
+                margin: 0.3em auto;
+            }
+            .reveal .strikethrough {
+                text-decoration: line-through;
+            }
+
+        </style>
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+    <div class="slides">
+        <section>
+            <h1>CQRS and Domain Events for integration</h1>
+            <p>Giorgio Sironi</p>
+        </section>
+
+        <section>
+          <p>Giorgio Sironi (<a href="https://twitter/com/giorgiosironi">@giorgiosironi</a>)</p>
+          <!-- TODO: replace photo -->
+          <div style="float: right; width: 20%" />
+              <img src="images/elife_squared.jpg" style="float: right; width: 100%;" />
+              <img src="images/elife-logo.jpg" style="float: right; width: 100%" alt="I work for eLife Sciences" />
+          </div>
+          <div style="float: left; width: 80%; margin-top: 5%"> 
+              <ul class="build">
+                <li>I'm a developer (writes code, design stuff)</li>
+                <li>Interested in
+                    <ul>
+                    <li>Automated testing and TDD</li>
+                    <li>Object-oriented programming</li>
+                    <li>Distributed systems</li>
+                    </ul>
+                </li>
+              </ul>
+          </div>
+          <p><em>If you are looking at these slides on your pc, press S to see the notes</em></p>
+          <aside class="notes">
+              This talk is extracted from the architecture of Onebip, a payment provider where I worked for the last 3 years. Now I work at eLife, a scientific journal that open sources everything they do in the spirit of open access in science.
+          </aside>
+        </section>
+
+        <section data-background-image="images/europe.png" data-background-size="100%">
+          <aside class="notes">
+              I live and work in the UK, but I come from Europe.
+          </aside>
+        </section>
+
+        <section>
+          <h2>Context</h2>
+          <img src="images/context.jpg" alt="Context diagram of Onebip components" />
+          <img src="images/onebip-logo.gif" alt="Onebip logo" style="height: 100px" />
+          <aside class="notes">
+              Onebip is a payment provider that takes money from your SIM card and uses it to pay for digital goods. There are hundreds of mobile phone operators to integrate with. Different people may work on each system. I'm ignoring reporting here, as historically was performed with giant queries and meshing together of CSVs from all the different systems.
+          </aside>
+        </section>
+
+  <section>
+      <h2>Implications</h2>
+      <ul>
+      <li class="fragment">many different logical and physical databases</li>
+      <li class="fragment">continuous need for integration e.g. for reporting needs</li>
+      <li class="fragment">no single services fits the bill</li>
+      </ul>
+      <aside class="notes">
+        I'd not got as far to say these are microservices, but they are definitely small services running on separate logical and physical databases (and so you can't run JOINs between them). There are all sort of advantages to this approach, like allowing different teams and services to move forward uncoupled to each other. However, when you need to do something that requires data from many different services, for example make a large report over payment failures and why they failed, no single service can satisfy your query as the data is separated into the abstraction-layer-for-mobile-carriers service (which contains the detailed errors) and the Core Domain that registers all transactions.
+        Consider for example a Subscription: it's an Aggregate with different meanings in two of these service, one contains all the state transition (paying, insolvent, suspended during vacation, canceled) and one instead all payments that have been made, the same Payment that is used in other business models like a single, non-recurring purchase. When you want to know how far in the past was the last successful payment of canceled subscriptions...
+      </aside>
+  </section>
+
+  <section data-background-image="images/blood.jpg" data-background-size="100%">
+      <h2>Bloody solutions (1/2)</h2>
+      Mega SQL query
+      <ul>
+      <li class="fragment">on which database, since they are all small?</li>
+      <li class="fragment">how to avoid thrashing the database machines?</li>
+      </ul>
+      <blockquote class="fragment">
+          When the ETL job to pull payments into the data warehouse starts, we go down for 10 minutes
+      </blockquote>
+      <aside class="notes">
+          But where? There is no single RDBMS that we can hit by queries, and expanding the Domain Model and the database of a single service requires us to piggy back everything that happens there, greatly expanding its APIs with tons of data. Even when the data is there, there are 8 years of history inside, so when we target a read replica it's locked down by the scans on the tables and it gets behind with respect to the master...
+      </aside>
+  </section>
+
+  <section data-background-image="images/blood.jpg" data-background-size="100%">
+      <h2>Bloody solutions (2/2)</h2>
+      Joining CSV files
+      <ul>
+      <li class="fragment">they become very large with historical data</li>
+      <li class="fragment">inefficient even on a single day as data could be filtered</li>
+      <li class="fragment">process of joining and filtering them becomes fragile as a consequence</li>
+      </ul>
+      <blockquote class="fragment">
+          Every morning at 7am I run a few MongoDB `touch` commands to warm up the database in RAM before the circus starts
+      </blockquote>
+      <aside class="notes">
+          The other solution is to extract large sections of data in order to feed them inside some process or tool (Hadoop, or a data warehouse). The more irrelevant data you have (like users opening payment pages but not following through) the more this becomes inefficient. Moreover, add users from cohorts of several years ago who still have active subscriptions and you understand that the problem is unbounded: you have to export almost the entirety of tables every time a report is needed.
+          After you have this large quantity of data to stich together, the process becomes unreliable as you are hitting the limits of RAM and IO of your servers. Hence the quote.
+      </aside>
+  </section>
+
+  <section>
+      <a href="https://twitter.com/vgman/status/562625810436456448">
+          <img src="images/conceptual_cqrs.jpg" alt="Conceptual model of CQRS by @ziobrando" />
+      </a>
+      <aside class="notes">
+        In Command-Query Responsibility Segregation, all the actions over a system are divided into Command and Queries. There are peculiarities to each of them but think mostly about writes and reads.
+        Commands are received by a single Aggregate, which is a machine deciding what to do. As a consequence its state is modified and Domain Events recording what has happened are produced.
+        Queries have to be satisfied whatever their target is (possibly millions of Aggregates). They are mostly precomputed into a separate Read Model through a mechanism called Projection, which is eventually consistent with the Command-side's Domain Model. Looking at the result of Queries a *human* decides what to do, probably issuing new Commands.
+        The services we have been talking about are the "code" in this picture. They have their own Domain Models, but they are not Read Models: they are optimized to deal with Commands like a user wanting to complete a payment, not for large cross-Aggregate calculations to fill reports. We had a well-designed system for the Command side, with isolated Aggregates even residing in different services. But we were missing the Queries side.
+      </aside>
+  </section>
+
+  <section>
+      The source-of-truth service: Demetra
+      <img src="images/source_of_truth.png" />
+      <aside class="notes">
+          I am calling this service Source Of Truth because Event Store is confusing: you mean a database or a service with that? Or the product Event Store?
+          The Source Of Truth service is populated by Domain Events coming from the other Service X, Service Y, Service Z; whenever a Command is handled there some Domain Events are generated and they will be kept into the Source Of Truth potentially forever.
+          Projections are specialized processes that populate tables/collections/whatever by processing one Domain Event at a time. They pull only the interesting events from the Source Of Truth in a never ending quest to be up-to-date.
+          The name is the Italian for Demeter, the goddess of harvest. Everyone brings a tribute from his harvest to her...
+      </aside>
+  </section>
+
+
+  <section>
+      <h1>It works! Why?</h1>
+      <ul>
+          <li class="fragment">there is all the data there, forever</li>
+          <li class="fragment">decoupling over delivery and calculation of Domain Events</li>
+          <li class="fragment">consolidation of data processing infrastructure in a single codebase</li>
+      </ul>
+      <aside class="notes">
+          Let me enter Panacea mode here and tell about the good stuff.
+          All the data that you may need about what happened in the system is there, so you can conceptually generate any report as long as it is a function of these data.
+         There is great decoupling, as both the delivery of a Domain Event from a Service to the Source Of Truth, and its processing by one of the Projections, can fail. They will be retried later and put into a queue. You can run heavy operations on separated database in order not to infect the ones that run live traffic.
+        Moreover, the consolidation of the data processing infrastructure, all the code that it needs, leads to lower costs as adding a projection is easier than ever.
+      </aside>
+  </section>
+
+  <section>
+      <h1> How: schema</h1>
+      <pre><code style="font-size: 90%;" data-trim data-lang="javascript">
+{
+    "id": "20ec0521-d127-4038-92ed-a4196c33705b",
+    "meta": {
+        "service": "core",
+        "type": "payment-completed",
+        "created_at": "2016-01-01T12:00:00.000Z",
+        "received_at": "2016-01-01T12:00:00.200Z",
+        "aggregate_id": "payment/23"
+        "correlation_id": "container/subscription/42",
+    },
+    "payload": {
+        "amount": "3.0000/EUR",
+        ...
+    }
+}
+          </code></pre>
+      <aside class="notes">
+          The only collection/table backing the Source Of Truth contains the Domain Events, and here's how we stored them.
+          Each event has an id which identifies it and is generated at creation. It can be used for idempotent delivery.
+          Each event also has a created_at time of creation, generated in the original Service; but also a received_at which is the time in which it was registered in the Source Of Truth. When you query from the human point of view you care about created_at, but Projections keep track of the last received_at so that at any crash or restart they resume from the checkpoint they saved onwards.
+          With aggregate_id I mean the DDD Aggregate that generated the event, while with correlation_id a longer-lived "container" that is useful for debugging the history of a user. In this case the Payment, generated and registered in seconds, is the Aggregate; the Subscription, which may last years before it's cancelled, is the source of correlation between disparate events.
+          The payload contains the actual data. You may have additional ids here for correlation, like the phone number of the user; but I only suggest to include what's already there because in this model everything additional can be joined in by projections later rather than be retrieved with difficulty by the original Service.
+      </aside>
+  </section>
+
+  <section>
+      <h1> How: technologies</h1>
+      <table style="border: none">
+      <tr>
+      <td style="border: none; vertical-align: middle; text-align: center;">
+      <img src="images/mongodb.png" alt="MongoDB" style="width: 48%; " />
+      </td>
+      <td style="border: none; vertical-align: middle; text-align: center;">
+      <img src="images/postgresql.png" alt="PostgreSQL" style="width: 48%; " />
+      </td>
+      </tr>
+      </table>
+      <aside class="notes">
+          We used MongoDB for storing the events, in a single collection of its own logical and physical database. Events are mostly unstructured in their payload, although the `meta` section is always consistent.
+          We used it also for the projections, although given their tabular nature they got ported to PostgreSQL later.
+          In retrospect we could have used PostgreSQL also for the events, using the JSON type for the payload. We choose MongoDB because it was already everywhere at the time, and that consolidated a lot of the headaches of learning the bits and pieces of a new database. There's value in consistent tooling across a platform with many services.
+          The general advice is to pull in whatever you need for projections; be aware that maintenance costs will go up as, for example, you have more EC2 instances to pay and more driver-facing code to maintain. Still better than hammering everything in a single database not fit for your workload and see queries time out again.
+      </aside>
+  </section>
+
+  <section>
+      <h1>How: projections</h1>
+      <pre><code style="font-size: 90%;" data-trim data-lang="javascript">
+{
+    "meta.type": { "$in" : interesting_types },
+    "received_at": { "$gt": last_checkpoint, "$lt": stable_timestamp }
+}
+      </code></pre>
+      <aside class="notes">
+          Projections work by pulling the events received after their last checkpoint. After applying them, they save the last received_at as the new checkpoint. 
+          `stable_timestamp` is usually 10 seconds before the current time, to avoid passing over events that are received by servers with a clock slightly off (1 second in the past for example).
+      </aside>
+  </section>
+
+  <section>
+      <h1> How: processes</h1>
+      <pre><code style="font-size: 90%;" data-trim data-lang="bash">
+      * * * * * www-data /var/www/demetra/bin/demetra projection:my-report
+      * * * * * www-data sleep 10 &amp;&amp; /var/www/demetra/bin/demetra projection:my-report
+      * * * * * www-data sleep 20 &amp;&amp; /var/www/demetra/bin/demetra projection:my-report
+      ...
+      </code></pre>
+      <aside class="notes">
+          This was a very ugly thing to do, but it worked for an year: projections as processes that startup, apply events newer than their checkpoint, save the last event as new checkpoint and exit.
+          Due to clock jitter (events are registered by multiple web servers receiving them through HTTP with clocks that may not be perfectly in sync) we only access events that are at least 10 seconds hold. Loss of latency but much lower probability of losing an event, and we are eventually consistent anyway.
+          These crons run the projection every 10 seconds, due to their sleep statements. After a while we introduced also long running processes, that are kept up by a deamon restarting them upon the possible crash.
+          Still all the projections are polling the database, as we cannot easily get pushed new events. There are some architecture that could do that, like having some RabbitMQ queue be populated upon event receival, but we did not go down the route for simplicity over performance. 
+      </aside>
+  </section>
+
+  <section>
+      <h1>Issues: delivery</h1>
+      <pre><code style="font-size: 90%;" data-trim data-lang="bash">
+      Request::to('https://source-of-truth.com/events', 'POST')
+          -&gt;withTheUsualAuthentication(...)
+          -&gt;asOptimisticJob()
+          -&gt;ensureIs(200, 409)
+          -&gt;retryPolicyIs(ExponentialBackoff::upTo('P1Y'))
+          ->send()
+      </code></pre>
+      <aside class="notes">
+          We deliver a Domain Event in-process from the other service that produced it. It's an optimistic delivery, which means that in the happy path nothing gets stored in queues or databases in that service. Any result that is not 200 or 409 (including timeout) leads to the request being repeated by a persistent queue out of the main process.
+          The retry policy has an exponential backoff: retry first after 1 second, if still negative after 2s, 4s, 8s... for a very long time as it's not acceptable to los Domain Events.
+          Notice this doesn't protect from crash of the process generating the event: the only way to get to that level of reliability is by transactionally persisting in the local database the events along with the change in state of the related Aggregate. However, that did not fit at all with the existing architecture so we stuck to this delivery pattern.
+      </aside>
+  </section>
+
+  <section>
+      <h1>Issues: out-of-order</h1>
+      <ul>
+          <li>purchase-landed, created 14:00:00, received 14:02:08 after N retries
+          <li>purchase-completed, created 14:01:50, received 14:01:51</li>
+      </ul>
+      <aside class="notes">
+          Since event delivery can fail and be retried, even inside a single Aggregate, they may then be received out of order when an earlier event is retried after a newer one is correctly delivered.
+          All projections need to take this into account: basically hiding all data that has not received a basic set of events. For example, in a conversion rate between purchase-landed and purchase-completed, do not consider purchase-completed in your selection query until that row has seen a purchase-landed for the same id.
+      </aside>
+  </section>
+
+  <section>
+      <h1>Issues: events are forever</h1>
+      <img src="images/forever.jpg" alt="Even James Bond knows" />
+      <aside class="notes">
+          Events are forever, once you publish one of them it's difficult to remove or modify field names, impossible to rename event types. Your projections must then be able to deal with all versions, inconsistent with each other. We could say that the schema (field names and their value types) of events is a very strong Published Interface and then breaking it is costly.
+         The common notion is to "upgrade" events of type T to the latest version with custom code, when retrieving them from the database of the last years of events. The reasoning is that you don't do it in each projection, but it's a partial solution so we usually stuck to not changing them and lived with it, rather introducing new events alongside the older ones.
+      </aside>
+  </section>
+
+  <section>
+      <h1>Issues: importing</h1>
+      <a href="https://commons.wikimedia.org/wiki/File:HY-MAC_1501.jpg">
+          <img src="images/excavator.jpg" alt="Excavate dirt (data) and put it into a standard form" />
+      </a>
+      <aside class="notes">
+          Chances are you aren't starting out on a green field project of 10 microservices. Who is?
+          So you'll need to simulate events for already existing data, or accept the missing information if it's not possible to retrieve it from some existing source.
+      </aside>
+  </section>
+
+  <section>
+      <h1>Issues: archival</h1>
+      <a href="https://en.wikipedia.org/wiki/University_of_Cambridge#/media/File:St_John%27s_College_Old_Library_interior.jpg"><img src="images/library.jpg" /></a>
+      <aside class="notes">
+        Last time I checked the number of events was at 700M events and growing, and they never go away. The solution chosen for when they will be too many to fit into a single collection/machine is the tiered sharding with MongoDB. Basically you choose a shard key (received_at plus possibly type) and put old data on less powerful hardware, by tagging all data older than a date X as pertaining to a replica set A and all newer as pertaining to replica set B.
+      </aside>
+  </section>
+
+  <section>
+      <h1>Conclusions</h1>
+      <ul>
+          <li class="fragment">Domain Events are non-intrusive</li>
+          <li class="fragment">A Source Of Truth very often comes up</li>
+          <li class="fragment">Be prepared</li>
+      </ul>
+      <aside class="notes">
+          Domain Events are very non-intrusive and you can emit them from your applications to easily integrate them with other service you are building. Sending them to a single Source Of Truth instead of having N times N dependencies seems to always come up (see Kafka or the work of <a href="https://www.infoq.com/interviews/kleppmann-data-infrastructure-logs-crdt">Martin Kleppmann</a>).
+          I have spent much time talking about the pain because I want you to be ready and have the right weapons on hand, not because I want to divert your from this route. I hope that you can skip directly to the solutions instead of swimming into the problems for months.
+      </aside>
+  </section>
+
+  <section class="thank-you-section">
+        <h1>Thanks!</h1>
+        <p><a href="https://twitter.com/giorgiosironi">@giorgiosironi</a> <a href="https://twitter.com/elife">@eLife</a></p>
+        <!-- TODO: replace with some elife official address -->
+        <p><a href="mailto:g.sironi@elifesciences.org">g.sironi@elifesciences.org</a></p>
+        <p><a href="https://elifesciences.org">elifesciences.org</a> (of course, we're hiring)</p>
+  </section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+                //showNotes: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

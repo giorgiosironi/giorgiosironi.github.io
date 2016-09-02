@@ -1,0 +1,121 @@
+  <section>
+      <h2>Context</h2>
+      Image of Onebip 3 systems and interactions with the outside world
+      Different people work on each system, note by putting omini with different color
+      Each project has its own database, they communicate via HTTP APIs
+      Mobile phone operators and merchants
+  </section>
+
+  <section>
+      <h2>What we wanted to do</h2>
+      <ul>
+      <li>daily deployment<li>
+      <li>refactor the hidden legacy code in the core system</li>
+      <li>deal with moving and complex requirements, always know what's live<li>
+      </ul>
+  </section>
+
+  <section>
+      <h2>The standard solution</h2>
+    Table:
+     unit, acceptance
+     fast, slower
+     isolated, all-encompassing on multiple systems and covering also legacy code
+     1000s, 100s
+     technical, customer-facing
+     "A return code of 709143 is FAILED", "I am billed with the message 'Thank you for your purchase'"
+     bicycle toolkit, bicycle
+  </section>
+
+  <section>
+      <h2>Introducing simulators</h2>
+      SimulatedUser
+      Primitives: addBilling($phoneNumber, $amount) : boolean
+      Used in place of operators
+      Make this appear one at the time:
+      "Just test with the real thing you mockist design-damager!"
+      "A run of our suite when tested with real mobile phone operators (which have no preproduction systems) costs about 500 EUR"
+  </section>
+
+  <section>
+      If you can'test through the API (need to look into the database directly for results), 
+      you're missing a way to monitor the real system
+    TDD at the System Scale
+  </section>
+
+  <section>
+    Example
+- I could sleep but this is faster and more reliable, next step can be launched as soon as the previous one is completed.
+ - need to do polling on a transfer-in URL, merchant integrating should do that too. Eat your own dogfood principle and simplify the APIs or introduce new ones basing on the feedback of the system-level TDD.
+ - we were missing an API to check the details of a transfer after the fact
+  </section>
+
+  <section>
+      <h2>1st try: PHPUnit</h2>
+      Image of the barebone object graph: PHPUnit test case object, Client, SimulatedUser backed by a MongoCollection on the simulations database
+  </section>
+
+  <section>
+      <h2>1st try: PHPUnit</h2>
+      <pre class="prettyprint" data-lang="php">
+      code with $this->given()
+      </pre>
+  </section>
+
+  <section>
+      <h2>2nd try: Behat</h2>
+      Image of the barebone object graph: FeatureContext, Client, SimulatedUser backed by a MongoCollection on the simulations database
+    Ah, decoupling. Apparently it works with testing frameworks too...
+    (potentially you could ship the Client object as an SDK for PHP)
+  </section>
+
+
+  <section>
+      <h2>2nd try: Behat</h2>
+      <pre class="prettyprint" data-lang="gherkin">
+      example Gherkin test
+      </pre>
+      much better, forces separation of the automation layer and of the specification layer that sits on top
+    source: http://specificationbyexample.com/
+  </section>
+
+  <section>
+  Other intermediate problems
+  </section>
+
+  <section>
+      <h2>But you know, integrated tests are slow</h2>
+      <pre class="prettyprint" data-lang="bash">
+        $ time vendor/bin/behat features/
+        ... much later
+        20 mins
+      </pre>
+  </section>
+
+  <section>
+      <h2>Discovery: our applications support concurrency</h2>
+      different user in each test, in production they work at the same time
+      by this time you have APIs to inquire the single payment instead of doing hardcoded SELECTs in Then steps...
+         (the usual problem with single-project PHPUnit integration tests)
+      so every test can run at the same time as any other test (provided you have CPU)
+  </section>
+
+  <section>
+      <h2>The code for parallelization</h2>
+      <pre class="prettyprint" data-lang="bash">
+        $ time vendor/bin/behat features/
+        ... much later
+        20 mins
+      </pre>
+      by @badkill
+  </section>
+
+  <section class="thank-you-section">
+        <h2>Thanks!</h2>
+        <p>@giorgiosironi @Onebip</p>
+        <p><a href="mailto:info@giorgiosironi.com">info@giorgiosironi.com</a></p>
+        <p><a href="http://www.onebip.com">onebip.com</a></p>
+        <p><a href="http://github.com/giorgiosironi/paratest">github.com/giorgiosironi/paratest</a> (some features not yet in @brianium's upstream)</p>
+  </section>
+
+

@@ -1,0 +1,15 @@
+# Parallel, 4 processes
+unit 15s
+integration 9s
+integration-parallel-paratest 34s
+acceptance 16s
+acceptance-parallel-paratest 31s
+Total: 2m18s
+
+# Serial
+unit 14s
+integration 8s
+integration-parallel-phpunit 1m28s
+acceptance 16s
+acceptance-parallel-phpunit 1m30s
+Total: 4m56s

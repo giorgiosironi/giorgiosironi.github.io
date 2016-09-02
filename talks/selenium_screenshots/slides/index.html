@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Test sulle immagini - Giorgio Sironi</title>
+
+		<meta name="description" content="How to make assertions on images inside automated tests, and why">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+        <style type="text/css">
+            .reveal section p.logo
+            {
+                margin: 25% !important;
+            }
+            .reveal section code {
+                font-size: 25px;
+                line-height: 1.2;
+                margin-top: 30px;
+            }
+        </style>
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Test sulle immagini</h1>
+                    <!--<h3>Evitare regressioni</h3>-->
+                    <p>Giorgio Sironi</p>
+                    <p class="logo"><img src="images/onebip-logo.gif" alt="Onebip" /></p>
+				</section>
+
+				<section>
+                    <h2><em>Collaudare!</em></h2>
+                    <img src="images/tree_hugging.jpg" />
+					<aside class="notes">
+                        We need it, to "be Agile". But if you don't know how to write a certain category of tests, you're out of luck. You will avoid those tests. <br />
+                        Also, the kind of tests gives you no feedback on the quality of your design. This it not for TDD.
+					</aside>
+				</section>
+
+				<section data-state="customevent">
+					<h2>Fotografare</h2>
+					<p>
+						Selenium 2 JSON Wire Protocol
+					</p>
+					<pre><code data-trim contenteditable>
+GET /session/:sessionId/screenshot
+(PNG blob encoded in base64)
+					</code></pre>
+					<aside class="notes">
+                    Selenium 2 allows you to use a REST-like API to startup browsers and using them not only to navigate but also to take screenshots.
+					</aside>
+				</section>
+
+				<section>
+					<h2>Su browser multipli</h2>
+					<pre><code data-trim contenteditable>
+array( 
+    'browserName' => 'internet explorer', 
+    'host' => SAUCE_HOST, 
+    'port' => 4444, 
+    'desiredCapabilities' => array( 
+        'platform' => 'Windows 2008', 
+        'version' => '9' 
+    ), 
+), 
+</code></pre>
+					<aside class="notes">
+                    SauceLabs runs the infrastructure: provides a set of virtual machines for each operating system, browser and version.
+					</aside>
+                    <img src="images/saucelabs.png" alt="SauceLabs logo" />
+				</section>
+
+				<section>
+					<h2>Il riferimento</h2>
+                    <img src="images/screenshots_uml.png" alt="Screenshot Strategy pattern UML diagram" />
+                <pre><code data-trim contenteditable>
+STORE_SCREENSHOTS=1 phpunit \
+> spec/crossbrowser/PaymentPageDesktopTest.php
+</code></pre>
+					<aside class="notes">
+                    Running the tests with a special environment variable triggers the Storage Strategy instead of the Analysis one.
+					</aside>
+				</section>
+
+                <section>
+					<h2>Confronto</h2>
+                <pre><code data-trim contenteditable>
+$ phpunit spec/crossbrowser/PaymentPageDesktopTest.php
+// under the covers:
+$ convert screenshot.png screenshot.pnm
+$ imgcmp -f reference.pnm -F screenshot.png -m mae \
+> | paste -sd+ | bc 
+1.025523
+// threshold can be as low as 0.0001
+$ compare reference.png screenshot.png difference.png
+</code></pre>
+                    <aside class="notes">
+                    Running the tests without any configuration generates a screenshot and compares it with the reference via Mean Average Error<br />
+ (Android color rendering is an example of how the comparison cannot be exact. Byte contents in the PNG such as image metadata too
+                    </aside>
+				</section>
+
+                <section>
+                    <section>
+					<h2>Risultati</h2>
+                    <img src="images/button/firefox_Windows_2003_12_ultimate.png" alt="Reference" />
+                    </section>
+                    <section>
+                    <img src="images/button/firefox_Windows_2003_12_ultimate_failed.png" alt="Screenshot taken" />
+                    </section>
+                    <section>
+                    <img src="images/button/firefox_Windows_2003_12_ultimate_difference.png" alt="Generated diff" />
+                    </section>
+                    <aside class="notes">
+                    Riferimento, generato, differenza dopo il fallimento
+                    </aside>
+				</section>
+
+				<section>
+                    <h2>Conclusioni</h2>
+                    <ul>
+                        <li class="fragment grow">Un test, tanti browser</li>
+                        <li class="fragment grow">Open source rende questo possibile</li>
+                        <li class="fragment grow">Test robusti richiedono lavoro</li>
+                    </ul>
+
+                    <aside class="notes">
+                    </aside>
+                </section>
+
+				<section>
+					<h1>Thanks</h1>
+					<h3>Che assert() sia con voi</h3>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

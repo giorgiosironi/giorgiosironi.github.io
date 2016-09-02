@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+        <title>
+            How to test years of behavior for N countries in a few minutes
+        </title>
+
+
+		<meta name="description" content="End-to-end testing through Behat talking to an HTTP API with massive parallelization">
+		<meta name="author" content="Giorgio Sironi">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+        <style type="text/css">
+            .reveal h1
+            {
+                font-size: 140%;
+            }
+            .reveal h2
+            {
+                font-size: 130%;
+            }
+            .reveal li {
+                padding: 0.2em;
+            }
+            .reveal section code {
+                font-size: 130%;
+                line-height: 1.2;
+                margin-top: 30px;
+            }
+            .reveal table {
+                border-collapse: collapse;
+            }
+            .reveal td {
+                width: 50%;
+                border: 1px solid black;
+                padding: 0.2em;
+            }
+            .reveal img {
+                padding: 0.1em;
+            }
+            .reveal blockquote {
+                margin: 0.3em auto;
+            }
+            .reveal .strikethrough {
+                text-decoration: line-through;
+            }
+        </style>
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+    <section>
+        <h1>How to test 2 years of behavior</h1>
+        <h2>for <span class="strikethrough">16</span> 70 countries</h2>
+        <h2>in <span class="strikethrough">4 minutes...</span> 18 minutes</h2>
+        <p>Giorgio Sironi</p>
+      <aside class="notes">
+          Since well-engineered things tend to acts as a center of gravity, the latest data I have on this test suite suggest that it has been greatly expanded from when I had this talk for the first time.
+      </aside>
+    </section>
+
+    <section>
+      <p>Giorgio Sironi (<a href="https://twitter/com/giorgiosironi">@giorgiosironi</a>)</p>
+      <!-- TODO: replace photo -->
+      <div style="float: right; width: 20%" />
+          <img src="images/elife_squared.jpg" style="float: right; width: 100%;" />
+          <img src="images/elife-logo.jpg" style="float: right; width: 100%" alt="I work for eLife Sciences" />
+      </div>
+      <div style="float: left; width: 80%; margin-top: 5%"> 
+          <ul class="build">
+            <li>I'm a developer (writes code, design stuff)</li>
+            <li>Interested in
+                <ul>
+                <li>Automated testing and TDD</li>
+                <li>Object-oriented programming</li>
+                <li>Distributed systems</li>
+                </ul>
+            </li>
+          </ul>
+      </div>
+      <p><em>If you are looking at these slides on your pc, press S to see the notes</em></p>
+      <aside class="notes">
+          I built this test infrastructure with (the help of) the Onebip team, where I worked for the last 3 years. Now I work at eLife, a scientific journal that open sources everything they do in the spirit of open access in science.
+      </aside>
+    </section>
+
+    <section>
+      <h2>Context</h2>
+      <img src="images/context.jpg" alt="Context diagram of Onebip components" />
+      <img src="images/onebip-logo.gif" alt="Onebip logo" style="height: 100px" />
+      <aside class="notes">
+          Onebip is a payment provider that takes money from your SIM card and uses it to pay for digital goods. There are hundreds of mobile phone operators to integrate with. Different people may work on each system. I'm ignoring reporting here and concentrate on the transactional part: what is needed to perform a payment.
+      </aside>
+    </section>
+
+  <section>
+      <h2>What we wanted to do</h2>
+      <ul>
+      <li class="fragment">daily deployment</li>
+      <li class="fragment">refactor the hidden legacy code in the core system</li>
+      <li class="fragment">deal with moving and complex requirements, always know what's live</li>
+      </ul>
+      <aside class="notes">
+          Test suites support multiple goals, like safety (I deploy and don't break what was working before), but also change (refactoring with a safety net) and documentation (readability of steps and avoiding writing tens of thousands of lines of test code.
+      </aside>
+  </section>
+
+  <section>
+      <h2>The standard solution</h2>
+      <table>
+      <thead>
+      <tr class="fragment">
+      <td>unit</td>
+      <td>end-to-end</td>
+      </tr>
+      </thead>
+      <tbody>
+      <tr class="fragment">
+      <td>fast</td>
+      <td>slower</td>
+      </tr>
+      <tr class="fragment">
+      <td>isolated</td>
+      <td>all-encompassing, covering even legacy</td>
+      </tr>
+      <tr class="fragment">
+      <td>1000s</td>
+      <td>100s</td>
+      </tr>
+      <tr class="fragment">
+      <td>technical</td>
+      <td>customer-facing</td>
+      </tr>
+      <tr class="fragment">
+      <td>"A return code of 709143 is FAILED"</td>
+      <td>"I am billed with the message 'Thank you for your purchase'"</td>
+      </tr>
+      <tr class="fragment">
+      <td>Bicycle toolkit</td>
+      <td>Cycling</td>
+      </tr>
+      </tbody>
+      </table>
+      <aside class="notes">
+      So I'm showing here how to write effective and fast end-to-end tests, but I'm saying at the same time that unit tests are just as important. Just easier to write, so here's some advice on the end-to-end ones.
+      </aside>
+  </section>
+
+  <section>
+      <h2>Introducing simulators</h2>
+      <img style="height: 400px;" src="images/simulators.jpg" alt="Simulators replace real operator servers" />
+     <blockquote cite="http://david.heinemeierhansson.com/2014/test-induced-design-damage.html" class="fragment">
+      "Just test with the real thing you mockist design-damager!"
+    </blockquote>
+     <p class="fragment">
+      A run of the suite when tested with real mobile phone operators (which have no preproduction systems) costs about 500 EUR
+    </p>
+    <aside class="notes">
+    Substituting the real APIs of operators. Implementing the Fake pattern. 
+    </aside>
+  </section>
+    
+  <section>
+      <h2>Simulator API</h2>
+      <pre><code data-trim>
+SimulatedUser::addBilling($phoneNumber, $amount) : boolean
+new SimulatedUser($mongoCollection);
+</code></pre>
+    <aside class="notes">
+    It's not as simple as mocking, as simulators need to be backed by an actual database as their code may run in many different processes and servers. Don't make the mistake of going for "as simple as possible" solutions like writing on files as they will get crazy with race conditions.
+    </aside>
+  </section>
+
+  <section>
+      <h2><a href="http://natpryce.com/articles/000780.html">TDD at the System Scale</a></h2>
+      If you can't test results through the API (need to look into the database directly for results), 
+      you're missing a way to monitor and drive the real system.
+    <aside class="notes">
+        Surprise, not only unit test drive design forcing low coupling and cohesion of objects; also end-to-end tests drive the design of a self-sufficient, complete and concurrent API.
+    </aside>
+  </section>
+
+  <section>
+    <h2>Tests are just another client of</h2>
+    <ul>
+    <li class="fragment">Merchant notifications (SUBSCRIPTION_ACTIVATED)</li>
+    <li class="fragment">Logs of calls between components</li>
+    <li class="fragment">Domain Events raised</li>
+    </ul>
+    <blockquote cite="http://david.heinemeierhansson.com/2014/test-induced-design-damage.html" class="fragment">
+    "Stop introducing APIs just for testing you mockist design-damager!"
+    </blockquote>
+    <p class="fragment">A run of our suite if executed manually by someone would take several weeks to complete. You can test with real databases, but not with real <em>time</em>.</p>
+  </section>
+
+  <section>
+  <h2>1st try: PHPUnit</h2>
+  <img src="images/phpunit.jpg" alt="PHPUnit Testcase object graph" />
+  </section>
+
+  <section>
+      <h2>1st try: PHPUnit</h2>
+      <pre><code style="font-size: 90%;" data-trim>
+public function testAIusacellUserWithMoneyCanActivateASubscription($serviceId, ...)
+{
+    $this->given(
+        $this->withServiceId($serviceId)
+             ->withOperator('Iusacell')
+    )
+    ->when(
+        $this->subscribing()
+    )
+    ->then(
+        $this->userReceivesBillings($firstBillingMessage)
+            ->forTimes(1)
+            ->merchantIsNotifiedOf('SUBSCRIPTION_ACTIVATED')
+            ->userReceivesBillings($renewalMessage)
+            ->forTimes(3)
+    );
+}
+      </code></pre>
+  </section>
+
+  <section>
+     <h2>2nd try: Behat</h2>
+      <pre><code data-trim>
+Given I am a US user
+When I subscribe to US_BROWSER_GAME
+Then I am billed 3.00 USD
+      </code></pre>
+    <aside class="notes">
+    Separate automation from specification, which is one thing that Cucumber-style frameworks force you to do. Also you cannot write much data inside Gherkin as it's not a structured format, so you have to select the most relevant, provide sensible defaults and make the job of the users of your system easier by asking them to fill in only what is written here (no 10-page form).
+    </aside>
+  </section>
+
+  <section>
+  <h2>2nd try: Behat</h2>
+  <img src="images/behat.jpg" alt="Behat object graph" />
+<aside class="notes">
+Ah, decoupling. Apparently it works with testing frameworks too.
+(potentially you could ship the Client object as an SDK for PHP)
+</aside>
+  </section>
+
+ <section>
+ <h2>The renewals problem</h2>
+  <pre><code data-trim>
+Given I am a US user
+And I have subscribed to US_BROWSER_GAME a week ago
+Then I am renewed with a 3.00 USD billing?
+  </code></pre>
+  <p class="fragment">Execution time: 168 hours</p>
+  </section>
+
+ <section>
+ <h2>Time passing is a Command to the system</h2>
+  <pre><code data-trim>
+Given I am a US user
+And I have subscribed to US_BROWSER_GAME
+When a week has passed
+Then I am renewed with a 3.00 USD billing
+  </code></pre>
+ </section>
+
+ <section>
+ <h2>Business time API</h2>
+  <pre><code data-trim>
+$ curl -X POST 'http://example.com/subscription/42/clock' \
+  -H 'X-Some-Authentication: ...'
+  -d 'ticks=168'
+{
+    now: "2014-05-16T09:30:00Z"
+}
+  </code></pre>
+  <aside class="notes">
+  Needs to be aggregate-specific, in this case impacting a single subscription or a single user. That opens up the possibility of parallelizing later.
+  </aside>
+ </section>
+
+<section>
+    <h2>The race condition problem</h2>
+    <img src="images/race_condition.png" />
+    <p class="fragment">They expose design problems that may become serious bugs in production under large traffic.</p>
+    <aside class="notes">
+    <p>When automating a payment flow that lasts tens of seconds to a single scenario of 1 second</p>
+    <p>Concurrent accesses to the same rows, responses that come too early.</p>
+    <p>Which may not necessarily being the last commits, a problem can emerge because them produce a difference in timing patterns, or a change in the CI machine</p>
+    <p>A test suite where 1 test randomly fails is flaky and may not be trusted</p>
+  <aside class="notes">
+    Read high level logs to find out which interactions are
+    (another example of system TDD driving you towards better auditing)
+    Once found out the problem, reproduce them reliably by inserting sleep() that exacerbate the problem in the right place
+    Sometimes you need support from people from multiple projects to find out the culprit
+    </aside>
+</section>
+
+  <section>
+      <h2>The "integrated tests are slow" problem</h2>
+      <pre class="prettyprint" data-lang="bash">
+    $ time vendor/bin/behat features/
+    ... much later
+    real    121m6.114s
+          </pre>
+      <aside class="notes">
+          If you run the tests serially, one after the other, you can grow a beard before you have a result.
+      </aside>
+  </section>
+
+  <section>
+      <h2>Discovery: our applications support concurrency</h2>
+      <img src="images/concurrency.jpg" style="height: 600px;" alt="Users in production environment" />
+  <aside class="notes">
+      The tests can be designed so that they are isolated from each other, following the boundaries of the Aggregates (Domain-Driven Design jargon) in the system. For example, use different randomly-generated phone numbers for each test, and only assert things that happen to that user such as <em>their</em> credit being affected by the payment and <em>their</em> subscription to a magazine being now active.
+      Also, any test should be able to run no matter what is the state of the database, so that large batches of setup and teardown operation are not necessary.
+  </aside>
+  </section>
+
+  <section>
+      <h2>The code for parallelization</h2>
+      <pre class="prettyprint" data-lang="bash">
+grep -nHR "Scenario:" features/ | sort -t: -k1,1 -k2,2n \
+| cut -d ":" -f1,2 | parallel -P 200% --gnu --halt-on-error=0 \
+--keep-order "php bin/behat {}" 
+      </pre>
+      by <a href="https://twitter.com/badkill">@badkill</a>
+      <aside class="notes">
+          Concurrency enables parallelism: if the tests are isolated from each other, you can run them in parallel. Specify a fixed process pool in order not to overload the system (here 2 processes per CPU.)
+      </aside>
+  </section>
+
+  <section>
+    <h2>Final results</h2>
+    <p class="fragment">X countries with 2 years of simulated time, in X minutes</p>
+    <p class="fragment">Configuring new countries, merchant and services with confidence</p>
+    <p class="fragment">Stop regressions while daily integrating (and deploying) the work of multiple teams and microservices</p>
+    <p class="fragment">Living documentation (at least for the developers)</p>
+    <p class="fragment">Enabling cleanup of legacy code now covered</p>
+    <p class="fragment">Simulating the feasibility of a scenario in minutes</p>
+    <p class="fragment">Built a sandbox for integration of merchants where they do not spend real money</p>
+    <aside class="notes">
+    We did not concentrate on BDD or on business communication, but started solving our verification problems by selecting good practices coming from experts. They worked and had also positive spillovers such as offering a sandbox.
+    </aside>
+  </section>
+
+  <section>
+        <h1>Interested?</h1>
+        <img src="images/sbe.jpg" alt="Specification by example" style="height: 15em" />
+        <img src="images/goos.jpg" alt="Growing Object-Oriented Software, guided by tests" style="height: 15em" />
+        <aside class="notes">
+            These are good, bullshit-free practical books that teach how to write good test suites <em>which</em> which also have good side-effects on architecture.
+        </aside>
+  </section>
+
+  <section class="thank-you-section">
+        <h1>Thanks!</h1>
+        <p><a href="https://twitter.com/giorgiosironi">@giorgiosironi</a> <a href="https://twitter.com/elife">@eLife</a></p>
+        <!-- TODO: replace with some elife official address -->
+        <p><a href="mailto:g.sironi@elifesciences.org">g.sironi@elifesciences.org</a></p>
+        <p><a href="https://elifesciences.org">elifesciences.org</a> (of course, we're hiring)</p>
+  </section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

@@ -1,0 +1,87 @@
+
+- Why distributing an application?
+-- ultimately a forced separation of concerns
+-- identification of bottleneck and scalability
+--- scalability of people
+-- isolation of failures
+-- devops teams partitioning "you build it you run it"
+-- development teams decoupling, Conway's law
+
+- The problems of distribution
+-- latency
+-- partial failure
+-- source: A note on distributed computing
+
+- 4 styles of integration
+-- file upload
+-- remote procedure call
+-- asynchronous messaging
+-- source: Enterprise Integration Patterns
+
+- REST microservices
+-- need to go from RPC to asynchronous
+
+- easy: authentication
+-- trusted environment (VPC)
+-- X-Authentication header carrying a signed timestamp
+-- pure server-to-server solution
+
+- easy: backward compatibility
+-- change in protocol from A to B such as adding a field in communication
+--- A adds the field, you integrate against B production version and deploy
+--- B starts using field, integrate against A new version and deploy
+-- removing a field
+--- B stop using field, deploy
+--- A stops passing it
+-- renaming a field
+--- A starts passing value with old and new name, deploy
+--- B start using new name, deploy
+--- A stops passing old name, deploy
+-- you need almost-continuous deployment! pipeline with end2end tests
+
+- medium: latency
+-- as fewer calls as possible
+-- a DDD-imprinted architecture
+--- a (void) Command comes in
+--- it is handled by a Transaction and some Events are produced
+--- when the transaction is successfully commited, the Events are sent to other applications
+-- moving *domain* from RPC to messaging
+
+- hard: failure
+-- cases (in order of severity)
+--- can't connect (network partition)
+--- timeout (due to connection or application? you can't know)
+--- 500 (down for maintenance, problem in deployments)
+--- has a bug for several hours until we fix it
+-- messaging over HTTP with internal queues
+--- evolved from simple HTTP calls
+-- moving *technology* from RPC to messaging
+
+- messaging over HTTP from A to B
+-- making a Command asynchronous
+--- B responds 202 Accepted, just put that in a queue 
+-- network partition
+--- optimistic job in A:
+---- try it with a specification of success ("must be 20X")
+---- if it fails, put it in a queue
+---- specify also a retry policy
+---- the process issuing the event wait for the first try but you don't have to create a job when succeeding, less resources used with persistent queues
+--- directly in background in A:
+---- put it in the A queue with the specification of success
+---- frees the process from waiting
+
+- aspects
+-- messaging semantics: you should probably never do anything after an external call completes, because what to do when it fails?
+-- idempotence (is not a medical condition). Its own slide
+-- retry policy: exponential backoff FTW
+-- queue persistence: big yes even if it's slower. Exclude just monitoring/statistics from persistence
+
+- conclusions
+-- multiple PHP applications can collaborate over HTTP, introspection in the application is very simple (curls, logs) and decoupling of code is forced
+-- solving latency aspects require architecture oriented to asynchronous calls
+-- the same asynchronous bias plus queuing/workers infrastructure is needed to deal with failure
+-- produce events, send them to someone else
+
+
+EXAMPLE during all slides
+

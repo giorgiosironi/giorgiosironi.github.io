@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+        <title>
+        Distributing PHP applications over HTTP
+        </title>
+
+
+		<meta name="description" content="Build a system of multiple-process, multiple-machine applications with PHP, in order to scale in hardware and number of developers. Have them integrate through the HTTP protocol and deal with the complexity that results">
+		<meta name="author" content="Giorgio Sironi">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+        <style type="text/css">
+            .reveal h1
+            {
+                font-size: 140%;
+            }
+            .reveal h2
+            {
+                font-size: 130%;
+                line-height: 1.2;
+            }
+            .reveal h3 {
+                font-size: 110%;
+                line-height: 1.2;
+            }
+            .reveal section p.logo
+            {
+                margin: 25% !important;
+            }
+            .reveal li {
+                padding: 0.2em;
+            }
+            .reveal section code {
+                font-size: 130%;
+                line-height: 1.2;
+                margin-top: 30px;
+            }
+            .reveal table {
+                border-collapse: collapse;
+            }
+            .reveal td {
+                width: 50%;
+                border: 1px solid black;
+                padding: 0.2em;
+            }
+            .reveal img {
+                padding: 0.1em;
+            }
+            .reveal blockquote {
+                margin: 0.3em auto;
+            }
+            table.tiers {
+                margin: 1em 5%;
+                width: 40%;
+                float: left;
+                /* TODO: how to separate tds? */
+            }
+            table.tiers td {
+                border: none;
+                background-color: #cccccc;
+                margin: 10px;
+            }
+            .difficulty_easy {
+                background-color: #3DBF48;
+            }
+            .difficulty_medium {
+                background-color: #C8D62B;
+            }
+            .difficulty_hard {
+                background-color: #ED4A4A;
+            }
+            .deployment_old {
+                background-color: white;
+            }
+            .deployment_intermediate {
+                background-color: #66DD66;
+            }
+            .deployment_new {
+                background-color: #008800;
+            }
+            .reveal .big {
+                font-size: 150%;
+            }
+        </style>
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+                    <h1>Distributing PHP applications</h1>
+                    <h2>over http</h2>
+                    <h3>microservices obligatory buzzword</h3>
+                    <p>Giorgio Sironi</p>
+                    <p class="logo"><img src="images/onebip-logo.gif" alt="Onebip" /></p>
+				</section>
+
+                <section>
+                    <img src="images/avatar_400x400.jpg" style="float: right; width: 20%;" />
+                  <p>Giorgio Sironi (@giorgiosironi)</p>
+                  <ul class="build">
+                    <li>I'm a developer (writes code, design stuff)</li>
+                    <li>Interested in
+                        <ul>
+                        <li>Object-oriented programming</li>
+                        <li>Automated testing and TDD</li>
+                        <li>Distributed systems</li>
+                        </ul>
+                    </li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h2>Context</h2>
+                  <img src="images/context.jpg" alt="Context diagram of Onebip components" />
+                  <aside class="notes">
+                      Multiple PHP processes in each box, both in Apache and long-running ones. Separate machines for some of the applications web servers/databases, some are consolidated on the same tier.
+                      I try to merge theory and practice on distributed systems, and this is where I get to exercise. Not Google, not your common website
+                  </aside>
+                </section>
+
+                <section>
+                    <h2>Probably already distributing</h2>
+                    <table class="tiers">
+                        <tr><td>JavaScript Client(*)</td></tr>
+                        <tr><td>PHP Web server(*)</td></tr>
+                        <tr><td>MySQL database</td></tr>
+                    </table>
+                    <table class="tiers fragment">
+                        <tr><td>Headless Client(*)</td></tr>
+                        <tr><td>PHP Web server(*)</td></tr>
+                        <tr><td>MongoDB database</td></tr>
+                    </table>
+                    <aside class="notes">
+                        You're probably already distributing along "functional" lines such as JavaScript rich clients, web servers and database node. Here we're taking another step and partitioning the problem vertically into standalone applications, each with its own database.
+                    </aside>
+                </section>
+
+  <section>
+      <h2>Why distributing along microservices</h2>
+
+      <ul>
+      <li class="fragment">code segregation (hopefully with decoupling as fitness function)</li>
+      <li class="fragment">scalability problems identification</li>
+      <li class="fragment">isolation of failures</li>
+      <li class="fragment">team partitioning (Conway's law)</li>
+      </ul>
+      <aside class="notes">
+          By no means a complete list.
+        Distributed applications are the ultimate separation of concerns.
+        You don't automatically get decoupling as a result of distributing as much as you don't get clean code just by writing tests. On the other hand, if you listen to your tests (or to the pain of deploying independently...)
+        If (when) our reporting system is down, users can continue to buy and reports can be fixed the morning after.
+      </aside>
+  </section>
+
+  <section>
+      <h2>The problems</h2>
+      <table>
+      <tr class="fragment">
+      <td>latency</td>
+      <td>chatty interfaces, N+1 query problem</td>
+      </tr>
+      <tr class="fragment">
+      <td>concurrency</td>
+      <td>lost updates, race conditions</td>
+      </tr>
+      <tr class="fragment">
+      <td>partial failure</td>
+      <td>Another application does not respond (and you don't know why)</td>
+      </tr>
+      </table>
+      <aside class="notes">
+          A note on distributed computing paper.
+      </aside>
+  </section>
+
+  <section>
+      <section>
+          <h2>4 styles of integration</h2>
+          <p class="fragment">File upload</p>
+          <p class="fragment">Shared Database</p>
+          <p class="fragment">Remote Procedure Call</p>
+          <p class="fragment">Asynchronous messaging</p>
+        <aside class="notes">
+            Enterprise Integration Patterns book.
+            HTTP is a synchronous protocol, but with some infrastructure it can be used for messaging.
+        </aside>
+      </section>
+        
+      <section>
+          <h2>HTTP microservices</h2>
+          <pre><code data-trim>
+&gt; POST /messages
+&gt; User-Agent: curl/7.32.0
+&gt; Host: connectivity.onebip.com
+&gt; Accept: application/json
+&gt; Content-Type: application/json
+&gt; 
+&gt; {"text":"Hello world", "phonenumber": "39.......",
+..., "message": "http://www.onebip.com/message/123"}
+
+&lt; HTTP/1.1 202 Accepted
+< Date: Mon, 22 Sep 2014 07:17:26 GMT
+</code></pre>
+      </section>
+  </section>
+
+  <section>
+
+      <section>
+        <h2>Let's solve the problems</h2>
+      </section>
+
+      <section>
+        <h2 class="difficulty_easy">Easy: authentication</h2>
+        <p class="fragment">Trusted environment (VPC/LAN) for some applications</p>
+        <p class="fragment">X-Authentication header carrying a signed timestamp</p>
+      </section>
+      <aside class="notes">
+        Pure server-to-server solution, but it's enough for these needs. Only a couple of the applications are exposed to the public, and needs authentication via cookies.
+      </aside>
+
+      <section>
+        <h2 class="difficulty_easy">Easy: backward compatibility</h2>
+        <table>
+            <tr>
+                <td class="deployment_old">A</td>
+                <td class="deployment_old">B</td>
+                <td class="deployment_explanation">Initial versions</td>
+            </tr>
+            <tr>
+                <td class="deployment_intermediate">A</td>
+                <td class="deployment_old">B</td>
+                <td class="deployment_explanation">Intermediate version of A, having both old and new field name</td>
+            </tr>
+            <tr>
+                <td class="deployment_intermediate">A</td>
+                <td class="deployment_new">B</td>
+                <td class="deployment_explanation">New version of B using new name</td>
+            </tr>
+            <tr>
+                <td class="deployment_new">A</td>
+                <td class="deployment_new">B</td>
+                <td class="deployment_explanation">New version of A only sending new field name</td>
+            </tr>
+        </table>
+      </section>
+      <aside class="notes">
+          Renaming a field. A is modified to send both the old and the new field names for a while, and when B deployed versions only depend on the new name the old can be removed.
+      </aside>
+
+      <section>
+        <h2 class="difficulty_medium">Medium: latency</h2>
+        <img style="width: 150%;" src="images/single_application_architecture.png" />
+        <p class="fragment"><em>Moving the Domain Model from RPC to messaging</em></p>
+      </section>
+      <aside class="notes">
+        A (void) Command comes in, possibly asynchronous (202 instead of 200). It is handled by a single database transaction and some Domain Events are produced as a result.
+        The Events are sent to other applications which integrate in an eventually consistent way. No transactions across applications, possibly not even aggregates.
+      </aside>
+
+      <section>
+          <h2 class="difficulty_hard">Hard: failure</h2>
+<pre><code data-trim>
+* Could not resolve host: connectivity.onebip.com
+* Closing connection 0
+curl: (6) Could not resolve host: connectivity.onebip.com
+</code></pre>
+      </section>
+      <aside class="notes">
+          In order of severity, anything can happen to a single application bringing your system partial failure. Can't connect (network partition), timeout (due to connection or application? you can't know), 500 (down for maintenance, problem in deployments), ...
+      </aside>
+
+      <section>
+          <h2 class="difficulty_hard">Hard: failure</h2>
+          Messaging over HTTP with an internal job system
+          <img src="images/mailbox.jpg" style="width: 50%" />
+          <p class="fragment"><em>Moving Infrastructure from RPC to messaging</em></p>
+      </section>
+      <aside class="notes">
+          With a bit of infrastructure you can use HTTP for messaging integrations, going from the 3rd to the 4th level of awesomeness.
+      </aside>
+  </section>
+
+  <section>
+      <section>
+          <h2>Messaging from A to B</h2>
+          Asynchronous commands, possibly with callbacks
+          <p class="big">A -&gt; B</p>
+      </section>
+      <section>
+          <h2>Job in A</h2>
+<pre><code data-trim>
+$request = Onebip\Http\Request::to('http://connectivity.onebip.com/messages', 'POST')
+    ->withBody(...)
+    ->withAuthentication()
+    ->asJob()
+    ->ensureIs(200, 409)
+    ->inBackground()
+    ->send();
+</code></pre>
+          Frees B from having to be up and running all the time, network partitions
+      </section>
+
+      <!--
+      <section>
+          <h2>Optimistic job in A</h2>
+<pre><code data-trim>
+$request = Onebip\Http\Request::to('http://connectivity.onebip.com/messages', 'POST')
+    ->withBody(...)
+    ->withAuthentication()
+    <span class="evidence"->asOptimisticJob()</span>
+    ->ensureIs(200, 409)
+    ->inBackground()
+    ->send();
+</code></pre>
+          Optimizes A resources not using the queue for successful deliveries, trading off a bit of process time
+      </section>
+    -->
+
+      <section>
+          <h2>Aspects: messaging semantics</h2>
+          <p>You should probably never do anything with the result of an external call</p>
+<pre><code data-trim>
+/**
+ * @return void
+ */
+function send(RequestJob $job);
+</code></pre>
+        <aside class="notes">
+            Even if you execute the first call in-process instead of in-background, what do you do if it fails and you don't have an answer to return?
+        </aside>
+        </section>
+
+        <section>
+            <h2>Aspects: idempotence</h2>
+            <p>Retrying the delivery of a message leads to the same end result than the original call</p>
+<pre><code data-trim>
+$ curl -v -X POST http://...
+...
+&gt; Timeout
+$ curl -v -X POST http://...
+...
+&gt; HTTP/1.1 409 Conflict
+</code></pre>
+        </section>
+        <aside class="notes">
+            Same end result, not same response. 409 means stop retrying while with 500 or timeouts I would go on.
+        </aside>
+
+        <section>
+            <h2>Aspects: retry policy</h2>
+            <ul>
+                <li class="fragment">new DontRetry()</li>
+                <li class="fragment">new RetryOnce() (the most difficult step)</li>
+                <li class="fragment">RetryManyTimes::forTimes($n)-&gt;spaced(60)</li>
+                <li class="fragment">ExponentialBackoff::atFirstWaiting(5)->upTo(3600)</li>
+            </ul>
+        <aside class="notes">
+            We prefer ExponentialBackoff to RetryManyTimes because you can leave the first interval very low in order to be used inside test suites. If an application continues not responding, retries do not accumulate while a good level of service is maintained for short hiccups.
+        </aside>
+        </section>
+
+        <section>
+            <h2>Aspects: queue persistence</h2>
+            <p class="fragment"><em>My message queue delivers 4 gazillion messages/hour!</em> </p>
+            <p class="fragment">With what persistence?</p>
+            <p class="fragment">RAM, filesystem of a single machine?</p>
+            <p class="fragment">Or a database with replica?</p>
+        </section>
+        <aside class="notes">
+            Not all messages accept best-effort delivery: registered payments come to mind.
+            We use a primary+secondary database as a backend. Necessary slower. Also great for introspection as you can query its state and see delivered/not delivered messages.
+        </aside>
+  </section>
+
+  <section>
+    <h2>Conclusion</h2>
+    <p class="fragment">decoupled PHP applications can collaborate over HTTP</p>
+    <p class="fragment">reducing latency requires a messaging architecture over RPC</p>
+    <p class="fragment">a job system can then deal with failure</p>
+    <p class="fragment">produce events, send them to someone else</p>
+    <aside class="notes">
+    </aside>
+  </section>
+
+  <section>
+        <h1>Interested?</h1>
+        <p><a href="http://scholar.harvard.edu/waldo/publications/note-distributed-computing">A Note on Distributed Computing (1994), by Jim Waldo et al.</a></p>
+        <p><a href="http://www.enterpriseintegrationpatterns.com/">Enteprise Integration Patterns by Grego Hohpe</a></p>
+        <p><a href="http://queue.acm.org/detail.cfm?id=2187821">Idempotence is not a medical condition</a></p>
+        <p><a href="http://www.infoq.com/articles/no-reliable-messaging">Nobody needs reliable messaging</a></p>
+        <p><a href="www.ics.uci.edu/~cs223/papers/cidr07p15.pdf">Life beyond distributed transactions</a></p>
+  </section>
+
+  <section class="thank-you-section">
+        <h1>Thanks!</h1>
+        <p>@giorgiosironi</p>
+        <p><a href="mailto:info@giorgiosironi.com">info@giorgiosironi.com</a></p>
+        <p><a href="http://www.onebip.com">onebip.com</a></p>
+  </section>
+
+  <section>
+      <h2>Attribution</h2>
+      <a href="http://commons.wikimedia.org/wiki/File:Poczta_Polska_Mailbox.jpg">
+        http://commons.wikimedia.org/wiki/File:Poczta_Polska_Mailbox.jpg
+      </a>
+  </section>
+
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

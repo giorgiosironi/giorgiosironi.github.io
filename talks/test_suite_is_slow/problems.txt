@@ -1,0 +1,9 @@
+- saturation of IO
+- database
+-- test tokens
+--- MongoDB: just replace the name
+--- MySQL: prepare multiple schemas in the morning
+- filesystem interaction
+-- rm -rf /hardcoded-fixture-folder
+- creation of new processes, via cli or gearman or http requests
+-- they usually don't bring the TEST_TOKEN with them
