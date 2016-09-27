@@ -111,7 +111,7 @@
                         <tr>
                             <td>1</td>
                             <td>1</td>
-                            <td>0</td>
+                            <td>1</td>
                             <td class="variables">0.9</td>
                             <td class="variables">0.1</td>
                         </tr>
@@ -143,9 +143,9 @@
                     <pre data-trim>
                     for each example x:
                         y = f(w * x) // * is a vector product
-                        e = ŷ - y // positive error, negative derivative
+                        e = ŷ - y // + error, - derivative
                         for each weight i:
-                            w<sub>i</sub> = η * e * x<sub>i</sub>
+                            w<sub>i</sub> = η * e * x<sub>i</sub> // &#x221d; derivative
                     </pre>
                     <aside class="notes">
                         Suppose we want to learn from one example at a time, showing them in sequence to our perceptron.
@@ -156,14 +156,22 @@
 
                 <section>
                     <h1>Linear boundaries</h1>
-                    <img src="img/XOR_perceptron_net.png" style="width: 40%" />
+                    <img src="img/linear_boundaries.gif" style="width: 80%" />
                     <aside class="notes">
                        A single perceptron can only get you so far. XOR is a common example of a function which is not linearly separable and hence cannot be learn by a perceptron. However, if you start connecting perceptrons to each other...
                     </aside>
                 </section>
 
                 <section>
-                    <h1>Networks</h1>
+                    <h1>On to networks</h1>
+                    <img src="img/XOR_perceptron_net.png" style="width: 40%" />
+                    <aside class="notes">
+                        ..you can solve much more complex problems. 
+                    </aside>
+                </section>
+
+                <section>
+                    <h1>Networks and backpropagation</h1>
                     <img src="img/colored_neural_network.svg.png" style="width: 30%" />
                     <aside class="notes">
                         Fortunately, we can build an actual neural network by feeding the output of a perceptron as the input of another. These structures are commonly separated into layers (at least in non-recurrent neural network): one input layer, one or many hidden layers, one output layer.
