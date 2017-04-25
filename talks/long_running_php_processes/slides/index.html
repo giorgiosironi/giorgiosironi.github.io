@@ -1,0 +1,101 @@
+<html>
+    <head>
+
+		<meta charset="utf-8">
+
+        <title>
+            CQRS and Domain Events for integration
+        </title>
+
+
+		<meta name="description" content="Discover how Command-Query Responsibility Segregation allowed to separate billing from reporting using different Bounded Contexts, applications and databases all tied together with Domain Events. ">
+		<meta name="author" content="Giorgio Sironi">
+        <link rel="stylesheet" href="reveal.js/css/reveal.css">
+        <link rel="stylesheet" href="reveal.js/css/theme/white.css">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="reveal.js/lib/css/zenburn.css">
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section>
+                    <h1>Long-running PHP processes</h1>
+                    <p>Giorgio Sironi</p>
+                    <p><small><em>If you are looking at these slides on your pc, press S to see the notes</em></small></p>
+                </section>
+
+                <section>
+                  <p>Giorgio Sironi (<a href="https://twitter.com/giorgiosironi">@giorgiosironi</a>)</p>
+                  <!-- TODO: replace photo -->
+                  <div style="float: right; width: 20%" />
+                      <img src="images/elife_squared.jpg" style="float: right; width: 100%;" />
+                      <img src="images/elife-logo.jpg" style="float: right; width: 100%" alt="I work for eLife Sciences" />
+                  </div>
+                  <div style="float: left; width: 80%; margin-top: 5%"> 
+                      <ul class="build">
+                        <li>Software Engineer in Test (automates stuff for a living)</li>
+                        <li>What do I do
+                            <ul>
+                            <li>Distributed systems</li>
+                            <li>Automated complex tests, integrating many different projects</li>
+                            <li>Continuous Delivery</li>
+                            <li>Pasta and risotto</li>
+                            </ul>
+                        </li>
+                        <!-- TODO: add IT, EU flags -->
+                      </ul>
+                  </div>
+                  <aside class="notes">
+                      TODO: Who I am, what do I do, bad humor
+                  </aside>
+                </section>
+                <section>
+                  <h1>(Main) PHP SAPIs</h1>
+                  <img src="images/php_sapis.png" alt="The type of PHP SAPIs and how the CLI one is used by all long-running processes" />
+                  <!-- https://www.draw.io/#G0B-qTXqTlk5YJUkVhOWVaaklDcEU -->
+                  <aside class="notes">
+                      PHP has many Server Application Programming Interfaces. They connect a PHP process to a variety of web servers, and also to shells that can spawn a new process by calling the /usr/bin/php (or similar) binary.
+                      You can do many things on the CLI, including interactive scripts like Symfony Console applications, or non-interactive scripts for deploy automation; cron jobs that run every day, hour or minute; and, finally long-running processes.
+                  </aside>
+                </section>
+                <section>
+                  <table>
+                      <tr>
+                          <th>CLI category</th>
+                          <th>Running time</th>
+                          <th>STDIN</th>
+                          <th>STDOUT</th>
+                      </tr>
+                      <tr>
+                          <td>Script</td>
+                          <td>seconds, minutes</td>
+                          <td>sometimes</td>
+                          <td>always</td>
+                      </tr>
+                      <tr>
+                          <td>Cron</td>
+                          <td>seconds (best), minutes</td>
+                          <td>no</td>
+                          <td>no</td>
+                      </tr>
+                      <tr>
+                          <td>Long-running process</td>
+                          <td>minutes, hours, days</td>
+                          <td>no</td>
+                          <td>no</td>
+                      </tr>
+                  </table>
+                  <aside class="notes">
+                      Runs typically until next deploy. No user input available apart from the initial configuration, data comes in through a queue or job server. Direct output is not read by anyone, you have to log (or redirect stdout to a log, ok)
+                      TODO: other strict differentiations? Do not include effects like efficiency
+                  </aside>
+                </section>
+            </div>
+        </div>
+        <script src="reveal.js/js/reveal.js"></script>
+        <script>
+Reveal.initialize();
+        </script>
+    </body>
+</html>
