@@ -60,6 +60,7 @@
                   </aside>
                 </section>
                 <section>
+                  <h1>Differentiation of CLI processes</h1>
                   <table>
                       <tr>
                           <th>CLI category</th>
@@ -91,6 +92,175 @@
                       TODO: other strict differentiations? Do not include effects like efficiency
                   </aside>
                 </section>
+
+                <section>
+                    <h1>Quick examples</h1>
+                    <!-- TODO: move up? -->
+                    <ul>
+                        <li>RabbitMQ/ZeroMQ/SQS consumer</li>
+                        <li>Gearman worker</li>
+                        <li>Database projection generator<li>
+                    </ul>
+                  <aside class="notes">
+                  </aside>
+                </section>
+
+                <section>
+                  <h1>Essential characteristics</h1>
+                  <ul>
+                      <li>runs for hours, and it's supposed to</li>
+                      <li>instantiated multiple times for parallelism</li>
+                      <li>supervised by a daemon instead of a web server</li>
+                  </ul>
+                  <aside class="notes">
+                      Distilled from the quick examples
+                  </aside>
+                </section>
+
+                <section>
+                  <h1>PHP?!</h1>
+                  <p>Not exactly built for this</p>
+                  <ul>
+                      <li>multiprocess is not memory efficient</li>
+                      <li>memory leaks</li>
+                      <li>no standard supervision system or framework</li>
+                      <li>not much fault tolerance (Fatal Error)</li>
+                      <li>no default termination</li>
+                      <li>TODO: list other disadvantages?</li>
+                  </ul>
+                  <aside class="notes">
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>PHP!</h1> <!-- TODO: better title -->
+                    <ul>
+                        <li>your application is already written with it</li>
+                        <li>you use libraries written in PHP (open source and private)</li>
+                        <li>deployment tooling is already in place</li>
+                        <li>you know the language</li>
+                        <li>ability to move existing functionality into the background</li>
+                    </ul>
+                  <aside class="notes">
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Minimal structure</h1>
+                      <pre><code style="font-size: 90%;" data-trim data-lang="php">
+#!/usr/bin/env php
+require_once 'bootstrap.php';
+while (!$shouldStop()) {
+    $item = $blockingCall($timeout = 20);
+    $doWork($item);
+}
+                      </code></pre>
+                  <aside class="notes">
+                      TODO: explain line by line
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Problems: graceful stopping</h1>
+                      <pre><code style="font-size: 90%;" data-trim data-lang="php">
+$flag = false;
+pcntl_signal('SIGTERM', function () use (&amp;$flag) {
+    $flag = true;
+});
+$shouldStop = function() use (&amp;$flag) {
+    pcntl_signal_dispatch();
+    return $flag;
+}
+                      </code></pre>
+                  <aside class="notes">
+                      TODO: order of problems may be shuffled
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Problems: memory</h1>
+
+                    -- memory limit: quit when memory ceiling is reached, to restart from a clean slate
+                    --- there will always be some library or extension that leaks memory
+                    --- don't fight with GC, just quit and if you do it once every ~100/1000 jobs executed you won't feel any performance difference
+                    --- https://github.com/elifesciences/bus-sdk-php/blob/master/src/Limit/MemoryLimit.php
+                  <aside class="notes">
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Problems: supervising</h1>
+                    <ul>
+                        <li>Is it alive?</li>
+                        <li>It's crashed, we should restart it</li>
+                        <li>There's a class not found, we should stop restarting it</li>
+                    </ul>
+                  <aside class="notes">
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Problems: locks</h1>
+                  <aside class="notes">
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Problems: bottlenecks</h1>
+- resources
+-- are going to limit how many you can get
+-- CPU: only consumed when not on the blocking call
+-- memory
+--- each process has its own isolated: multiprocesses, not multithreading
+--- you can try optimizing this by forking a base process to leverage copy-on-write on the base memory allocated by the interpreter. In my opinion a shared nothing approach is easier to work with
+-- disk: if you write local logs. Only a problem if it gets into a bad loop or tries to log huge data structures
+-- external resources throughput (e.g. database too many queries). This is usually the most limiting factor
+                  <aside class="notes">
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Tools</h1>
+- Unix tools (debugging)
+-- ps faxww, check all options matter
+- New Relic (VM-wide)
+- libraries
+-- Symfony Console (why not? although the user interaction part is not needed, it's useful to parse arguments and have a standard OOP approach 
+- daemons
+-- Upstart (14.04) https://github.com/elifesciences/search-formula/blob/master/salt/search/config/etc-init-search-gearman-worker.conf
+--- /var/log/upstart
+-- Systemd
+-- Supervisord
+--- https://serversforhackers.com/monitoring-processes-with-supervisord
+                  <aside class="notes">
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Resources (useful links)</h1>
+                  <aside class="notes">
+                  </aside>
+                </section>
+
+              <section>
+                  <h1>Conclusions</h1>
+                  <ul>
+                      <li class="fragment"></li>
+                      <li class="fragment"></li>
+                      <li class="fragment"></li>
+                  </ul>
+                  <aside class="notes">
+                  </aside>
+              </section>
+
+              <section class="thank-you-section">
+                    <h1>Thanks!</h1>
+                    <p><a href="https://twitter.com/giorgiosironi">@giorgiosironi</a> <a href="https://twitter.com/elife">@eLife</a></p>
+                    <p><a href="mailto:g.sironi@elifesciences.org">g.sironi@elifesciences.org</a></p>
+                    <p><a href="https://elifesciences.org">
+                      <img src="images/elife-logo.jpg" style="float: right; width: 100%" alt="I work for eLife Sciences" />
+                    </a></p>
+              </section>
             </div>
         </div>
         <script src="reveal.js/js/reveal.js"></script>

@@ -6,42 +6,42 @@ Long-running PHP processes
 ++ CLI -> scripts, crons but also long-running processes
 + Venn diagram
 ++ web
-++- mod_php
-++- php_fpm
-+- cli
-+-- cron
-+-- script/console command
-+-- long-running processes
-- cron/script
--- run for milliseconds/seconds
--- spawn a process periodically (timer) or on-demand 
-- long-running PHP process
--- runs for minutes/hours/days (until the next deploy)
--- single PID directly monitored by a daemon
--- can be instantiated multiple times
--- can crash and be respawned
-- PHP not built for this
--- but you have lots of Domain Models
--- and other libraries written in PHP
--- and deployment tooling
--- and you know the language well
--- ability to move processing from to the background
-- structure
--- main loop
--- while (blocking call)
--- wrapped in monitoring unit
--- blocking call is sometimes a sleep(), but at that point why not making a cron instead? Because you want to tune how much to sleep depending on what is happening, or sleeping seconds rather than a minute... can get complex, quickly
-- quick examples
--- queue worker for RabbitMQ, SQS or Gearman
++++ mod_php
++++ php_fpm
+++ cli
++++ cron
++++ script/console command
++++ long+running processes
++ cron/script
+++ run for milliseconds/seconds
+++ spawn a process periodically (timer) or on+demand 
++ long+running PHP process
+++ runs for minutes/hours/days (until the next deploy)
+++ single PID directly monitored by a daemon
+++ can be instantiated multiple times
+++ can crash and be respawned
++ PHP not built for this
+++ but you have lots of Domain Models
+++ and other libraries written in PHP
+++ and deployment tooling
+++ and you know the language well
+++ ability to move processing from to the background
++ structure
+++ main loop
+++ while (blocking call)
+++ wrapped in monitoring unit
+++ blocking call is sometimes a sleep(), but at that point why not making a cron instead? Because you want to tune how much to sleep depending on what is happening, or sleeping seconds rather than a minute... can get complex, quickly
++ quick examples
+++ queue worker for RabbitMQ, SQS or Gearman
 - logging
 -- question: what is it doing?
 -- either redirect stdout/stderr, or capture the with the daemon
 -- or log whatever happens, there's no one looking at the output
 - monitoring
 -- question: is it alive? is it making progress?
-- graceful restarts/signals -> problem of not interrupting half-done work
--- SIGTERM/SIGQUIT
--- SIGKILL
++ graceful restarts/signals +> problem of not interrupting half+done work
+++ SIGTERM/SIGQUIT
+++ SIGKILL
 -- pcntl_signal_dispatch, https://github.com/elifesciences/bus-sdk-php/blob/master/src/Limit/SignalsLimit.php
 - limits
 -- signal limit: quit if a SIGTERM or similar has been received (respawn after a code change)
@@ -53,22 +53,22 @@ Long-running PHP processes
 -- "state limit": just quit if the situation is too awry
 --- https://dzone.com/articles/long-running-php-processes
 --- usually not implemented in code but in the configuration of your supervision tree (Erlang OTP anyone?)
-- resources
--- are going to limit how many you can get
--- CPU: only consumed when not on the blocking call
--- memory
---- each process has its own isolated: multiprocesses, not multithreading
---- you can try optimizing this by forking a base process to leverage copy-on-write on the base memory allocated by the interpreter. In my opinion a shared nothing approach is easier to work with
--- disk: if you write local logs. Only a problem if it gets into a bad loop or tries to log huge data structures
--- external resources throughput (e.g. database too many queries). This is usually the most limiting factor
-- Unix tools (debugging)
--- ps faxww, check all options matter
-- New Relic (VM-wide)
-- libraries
--- Symfony Console (why not? although the user interaction part is not needed, it's useful to parse arguments and have a standard OOP approach 
-- daemons
--- Upstart (14.04) https://github.com/elifesciences/search-formula/blob/master/salt/search/config/etc-init-search-gearman-worker.conf
---- /var/log/upstart
--- Systemd
--- Supervisord
---- https://serversforhackers.com/monitoring-processes-with-supervisord
++ resources
+++ are going to limit how many you can get
+++ CPU: only consumed when not on the blocking call
+++ memory
++++ each process has its own isolated: multiprocesses, not multithreading
++++ you can try optimizing this by forking a base process to leverage copy+on+write on the base memory allocated by the interpreter. In my opinion a shared nothing approach is easier to work with
+++ disk: if you write local logs. Only a problem if it gets into a bad loop or tries to log huge data structures
+++ external resources throughput (e.g. database too many queries). This is usually the most limiting factor
++ Unix tools (debugging)
+++ ps faxww, check all options matter
++ New Relic (VM+wide)
++ libraries
+++ Symfony Console (why not? although the user interaction part is not needed, it's useful to parse arguments and have a standard OOP approach 
++ daemons
+++ Upstart (14.04) https://github.com/elifesciences/search+formula/blob/master/salt/search/config/etc+init+search+gearman+worker.conf
++++ /var/log/upstart
+++ Systemd
+++ Supervisord
+
