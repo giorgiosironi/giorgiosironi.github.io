@@ -4,14 +4,25 @@
 		<meta charset="utf-8">
 
         <title>
-            CQRS and Domain Events for integration
+            Long-running PHP processes
         </title>
 
 
-		<meta name="description" content="Discover how Command-Query Responsibility Segregation allowed to separate billing from reporting using different Bounded Contexts, applications and databases all tied together with Domain Events. ">
+		<meta name="description" content="TODO">
 		<meta name="author" content="Giorgio Sironi">
         <link rel="stylesheet" href="reveal.js/css/reveal.css">
         <link rel="stylesheet" href="reveal.js/css/theme/white.css">
+        <style>
+            table.differentiation {
+                font-size: smaller;
+            }
+            .small {
+                font-size: 10px;
+            }
+            img {
+                border: none !important;
+            }
+        </style>
 
 		<!-- For syntax highlighting -->
 		<link rel="stylesheet" href="reveal.js/lib/css/zenburn.css">
@@ -22,15 +33,19 @@
                 <section>
                     <h1>Long-running PHP processes</h1>
                     <p>Giorgio Sironi</p>
-                    <p><small><em>If you are looking at these slides on your pc, press S to see the notes</em></small></p>
+                    <p><small><em>If you are looking at these slides on your pc, there are speaker notes in the HTML</em></small></p>
                 </section>
 
                 <section>
                   <p>Giorgio Sironi (<a href="https://twitter.com/giorgiosironi">@giorgiosironi</a>)</p>
-                  <!-- TODO: replace photo -->
                   <div style="float: right; width: 20%" />
-                      <img src="images/elife_squared.jpg" style="float: right; width: 100%;" />
+                      <a href="https://twitter.com/giorgiosironi"><img src="images/elife_squared.jpg" style="float: right; width: 100%;" /></a>
+                      <!-- TODO: add link to eLife -->
                       <img src="images/elife-logo.jpg" style="float: right; width: 100%" alt="I work for eLife Sciences" />
+                      <div style="float: right; width: 100%" />
+                          <img src="images/it.png" style="width: 45%" alt="Italy" />
+                          <img src="images/eu.jpg" style="width: 45%" alt="European Union" />
+                      </div>
                   </div>
                   <div style="float: left; width: 80%; margin-top: 5%"> 
                       <ul class="build">
@@ -47,7 +62,7 @@
                       </ul>
                   </div>
                   <aside class="notes">
-                      TODO: Who I am, what do I do, bad humor
+                      I am a SET, which is a term Google invented (and recently abandoned) to signify what you do when you turn Software Engineers to solve testing and related build/tooling/deployment problems. As such, I put together projects inside distributed systems, help test their integration and other non-functional requirements; with the goal of deploying new versions every hour without breaking.
                   </aside>
                 </section>
                 <section>
@@ -60,8 +75,8 @@
                   </aside>
                 </section>
                 <section>
-                  <h1>Differentiation of CLI processes</h1>
-                  <table>
+                  <h1>Differentiation</h1>
+                  <table class="differentiation">
                       <tr>
                           <th>CLI category</th>
                           <th>Running time</th>
@@ -89,19 +104,20 @@
                   </table>
                   <aside class="notes">
                       Runs typically until next deploy. No user input available apart from the initial configuration, data comes in through a queue or job server. Direct output is not read by anyone, you have to log (or redirect stdout to a log, ok)
-                      TODO: other strict differentiations? Do not include effects like efficiency
+                      There are some other concerns like efficiency, but it's difficult to absolutely characterize it like we do here with STDIN or STDOUT.
                   </aside>
                 </section>
 
                 <section>
                     <h1>Quick examples</h1>
-                    <!-- TODO: move up? -->
                     <ul>
                         <li>RabbitMQ/ZeroMQ/SQS consumer</li>
                         <li>Gearman worker</li>
-                        <li>Database projection generator<li>
+                        <li>Database projection generator</li>
                     </ul>
                   <aside class="notes">
+                      I will distinguish conceptually between queue workers and job sytem workers, but functionally their PHP implementation are much of the same and both made good examples of long-running processes.
+                      There are some more exotic cases like processes listening to databases (polling or long-polling for new data) to transform what they receive into a materialized view.
                   </aside>
                 </section>
 
@@ -110,38 +126,41 @@
                   <ul>
                       <li>runs for hours, and it's supposed to</li>
                       <li>instantiated multiple times for parallelism</li>
-                      <li>supervised by a daemon instead of a web server</li>
+                      <li>child of a daemon instead of a web server</li>
                   </ul>
                   <aside class="notes">
-                      Distilled from the quick examples
+                      You don't want a queue worker to be created every time a new HTTP request comes in: you want it to be ready to work on new transactions with minimum latency. 
+                      You also may want to scale the throughput of transactions you can handle by adding multiple copies of this process, either on the same machine or eventually on multiple containers or servers.
+                      You don't want to submit these processes to the limitation of, say, running inside Apache's mod_php or php-fpm with a maximum execution time and an interface oriented to dealing with HTTP requests. A transaction can be any work item to process, not just a request coming from outside.
                   </aside>
                 </section>
 
                 <section>
-                  <h1>PHP?!</h1>
-                  <p>Not exactly built for this</p>
+                  <h1>PHP?!</h1> <!-- TODO: surprised face -->
+                  <p>Not exactly built for this (non-exhaustive list)</p>
                   <ul>
-                      <li>multiprocess is not memory efficient</li>
-                      <li>memory leaks</li>
-                      <li>no standard supervision system or framework</li>
-                      <li>not much fault tolerance (Fatal Error)</li>
-                      <li>no default termination</li>
-                      <li>TODO: list other disadvantages?</li>
+                      <li class="fragment">multiprocess is not memory efficient</li>
+                      <li class="fragment">no standard supervision system or framework</li>
+                      <li class="fragment">not much fault tolerance (Fatal Error)</li>
                   </ul>
                   <aside class="notes">
+                      In general, PHP provides parallel, independent execution by spawning multiple processes. This is not memory efficient as each process, unless you go to the touble of forking your own processes, which ties all your copies together and I prefer to avoid.
+                      Unlike with Erlang or other platform build for high concurrency and fault-tolerance, there is no standard architecture to put processes into a framework like you would do for classes with PSR standards instead. And when you encounter a (non-Catchable) Fatal Error, there's no way to recover inside the same process.
+                      There are many more problems coming up, such as memory leaks, which I'll list later. Just wanted to let you know that I am aware of the limitations of PHP for this job.
                   </aside>
                 </section>
 
                 <section>
-                    <h1>PHP!</h1> <!-- TODO: better title -->
+                    <h1>PHP!</h1> <!-- TODO: better title, sunglasses face -->
                     <ul>
-                        <li>your application is already written with it</li>
-                        <li>you use libraries written in PHP (open source and private)</li>
-                        <li>deployment tooling is already in place</li>
-                        <li>you know the language</li>
-                        <li>ability to move existing functionality into the background</li>
+                        <li class="fragment">your application is already written with it</li>
+                        <li class="fragment">you use libraries written in PHP (open source and private)</li>
+                        <li class="fragment">deployment tooling is already in place</li>
+                        <li class="fragment">you know the language</li>
+                        <li class="fragment">ability to move existing functionality into the background</li>
                     </ul>
                   <aside class="notes">
+                      We can argue, however, that using the same language you are already using for your existing applications provide some good advantages, provided you do not hit its limits.
                   </aside>
                 </section>
 
@@ -153,15 +172,45 @@ require_once 'bootstrap.php';
 while (!$shouldStop()) {
     $item = $blockingCall($timeout = 20);
     $doWork($item);
+    $commit($item);
 }
                       </code></pre>
                   <aside class="notes">
-                      TODO: explain line by line
+                      Once the PHP CLI script has finished bootstrapping, it goes into a loop for processing transactions (not necessarily a database transaction: using the term in a more conceptual . This loop will only exit if some conditions are reached in $shouldStop, for example a signal being received or some very bad, unrecoverable exception being caught before.
+                      Inside the loop, a single transaction consists of stopping on a blocking call, like receiving a message from a queue or a task from a job server. This may be a TCP connection or HTTP long polling, and should always be configured with  a timeout, resulting in a null $item and an empty iteration that can bring us to re-evaluate the loop condition periodically.
+                      Once we have $item, we have to process it: calculate a quote, resize an image, send an email, and so on.
+                      To implement at-least-once-delivery, the only sensible option for processes like these which are often integrating many different systems, many queues/job systems require a commit action to be performed as the last step. Committing the item will remove it permanently from the queue, while if $doWork crashed the item will eventually reappear to retry processing. Alternatively, they require to specify a callback and the successful execution of that callback without exceptions will be interpreted as committing.
                   </aside>
                 </section>
 
                 <section>
-                    <h1>Problems: graceful stopping</h1>
+                    <h1>Problems: supervising (1)</h1>
+                    <ul>
+                        <li>Is the process still alive?</li>
+                        <li>If it's crashed, we should restart it</li>
+                        <li>There's a <code>Class 'X' not found</code>, we should stop restarting it</li>
+                    </ul>
+                  <aside class="notes">
+                      Even if we strive for a process being long-running, it will sooner or later stop due to external unforeseen conditions (uncaught exceptions, Fatal Error, VM problems, full disks...) Therefore we would like the process to be restarted if it's a sensible thing to do, to continue to process new transactions, possibly pursuing a let-it-crash philosophy. Howewer, if a process continues to crash because there is some underlying problem like a bad deploy, restarting it is only going to saturate the CPU with its bootstrap.
+                      You may have noticed we are reinventing the first level of an Erlang supervision tree. To get good ideas from other platforms without getting their battle-tested implementations is the price we pay for the advantages of using PHP to solve this problem.
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Problems: supervising (2)</h1>
+                    <ul>
+                        <li>Supervisord (everywhere)</li>
+                        <li>Upstart (e.g. Ubuntu 14.04)</li>
+                        <li>Systemd (e.g. Ubuntu 16.04)</li>
+                    </ul>
+                  <aside class="notes">
+                     
+                  </aside>
+                </section>
+
+
+                <section>
+                    <h1>Problems: stopping</h1>
                       <pre><code style="font-size: 90%;" data-trim data-lang="php">
 $flag = false;
 pcntl_signal('SIGTERM', function () use (&amp;$flag) {
@@ -179,46 +228,44 @@ $shouldStop = function() use (&amp;$flag) {
 
                 <section>
                     <h1>Problems: memory</h1>
-
-                    -- memory limit: quit when memory ceiling is reached, to restart from a clean slate
-                    --- there will always be some library or extension that leaks memory
-                    --- don't fight with GC, just quit and if you do it once every ~100/1000 jobs executed you won't feel any performance difference
-                    --- https://github.com/elifesciences/bus-sdk-php/blob/master/src/Limit/MemoryLimit.php
+                      <pre><code style="font-size: 90%;" data-trim data-lang="php">
+# php.ini memory_limit = -1
+$shouldStop = function() use ($maximum) {
+    return memory_get_usage(true) &gt; $maximum;
+}
+                      </code></pre>
                   <aside class="notes">
+                      As a PHP process works for hours or days, it may progressively leak memory that remains allocated. These leaks may be beyond your control, coming from the insides of a library or a PHP extension; even if they are almost unnoticeable, they accumulate and can make your process crash or, worse, make your machine swap heavily impacting performance greatly. Web-facing processes do not suffer this problem as most (but not all, e.g. database persistent connections) of the memory is not persistent and is wiped at the end of every HTTP request.
+                      PHP is not the JVM so I decided not to try to optimize garbage collection or to track down every possible leakage. A more resilient approach is to replicate the process and have each instance monitor its memory usage as a stopping condition. If the memory usage is too high, the process exits gracefully and a new copy is respawned by its supervisor, with fresh and empty RAM segments.
+                      memory_get_usage(true) is a good approximation of what top reports in the RES(ident) column, total memory allocated to the script (in my experience top always reports some more, probably due to a fixed overhead of the interpreter. memory_limit can usually be set to no limit for CLI processes to avoid for outliers to complete without crashing, as they will be followed by a restart. The overhead of a restart may be paid just once every several thousand iterations, depending on how much memory is being leaked.
                   </aside>
                 </section>
 
-                <section>
-                    <h1>Problems: supervising</h1>
-                    <ul>
-                        <li>Is it alive?</li>
-                        <li>It's crashed, we should restart it</li>
-                        <li>There's a class not found, we should stop restarting it</li>
-                    </ul>
-                  <aside class="notes">
-                  </aside>
-                </section>
-
+                <!--
                 <section>
                     <h1>Problems: locks</h1>
                   <aside class="notes">
                   </aside>
                 </section>
+                -->
 
+                <!--
                 <section>
                     <h1>Problems: bottlenecks</h1>
-- resources
--- are going to limit how many you can get
--- CPU: only consumed when not on the blocking call
--- memory
---- each process has its own isolated: multiprocesses, not multithreading
---- you can try optimizing this by forking a base process to leverage copy-on-write on the base memory allocated by the interpreter. In my opinion a shared nothing approach is easier to work with
--- disk: if you write local logs. Only a problem if it gets into a bad loop or tries to log huge data structures
--- external resources throughput (e.g. database too many queries). This is usually the most limiting factor
++ resources
+++ are going to limit how many you can get
+++ CPU: only consumed when not on the blocking call
+++ memory
++++ each process has its own isolated: multiprocesses, not multithreading
++++ you can try optimizing this by forking a base process to leverage copy+on+write on the base memory allocated by the interpreter. In my opinion a shared nothing approach is easier to work with
+++ disk: if you write local logs. Only a problem if it gets into a bad loop or tries to log huge data structures
+++ external resources throughput (e.g. database too many queries). This is usually the most limiting factor
                   <aside class="notes">
                   </aside>
                 </section>
+                -->
 
+                <!--
                 <section>
                     <h1>Tools</h1>
 - Unix tools (debugging)
@@ -226,18 +273,21 @@ $shouldStop = function() use (&amp;$flag) {
 - New Relic (VM-wide)
 - libraries
 -- Symfony Console (why not? although the user interaction part is not needed, it's useful to parse arguments and have a standard OOP approach 
-- daemons
--- Upstart (14.04) https://github.com/elifesciences/search-formula/blob/master/salt/search/config/etc-init-search-gearman-worker.conf
---- /var/log/upstart
--- Systemd
--- Supervisord
---- https://serversforhackers.com/monitoring-processes-with-supervisord
                   <aside class="notes">
                   </aside>
                 </section>
+                -->
 
                 <section>
-                    <h1>Resources (useful links)</h1>
+                    <h1>Resources</h1>
+                    <ul>
+                        <li><a href="https://github.com/elifesciences/bus-sdk-php/blob/master/src/Limit/SignalsLimit.php">Sample of exiting on signal</a></li>
+                        <li><a href="https://github.com/elifesciences/bus-sdk-php/blob/master/src/Limit/MemoryLimit.php">Sample of exiting on memory limit</a></li>
+                        <li><a href="https://github.com/elifesciences/search-formula/blob/master/salt/search/config/etc-init-search-gearman-worker.conf">Sample Upstart configuration</a></li>
+                        <li><a href="https://blog.bixly.com/supervisord-or-how-i-learned-to-stop-worrying-and-um-use-supervisord">Supervisord tutorial</a></li>
+                        <li><a href="http://upstart.ubuntu.com/cookbook/">Upstart cookbook</a></li>
+                        <li><a href="https://wiki.ubuntu.com/SystemdForUpstartUsers">Upstart vs Systemd cheatsheet</a></li>
+                    </ul>
                   <aside class="notes">
                   </aside>
                 </section>
@@ -245,9 +295,9 @@ $shouldStop = function() use (&amp;$flag) {
               <section>
                   <h1>Conclusions</h1>
                   <ul>
-                      <li class="fragment"></li>
-                      <li class="fragment"></li>
-                      <li class="fragment"></li>
+                      <li class="fragment">PHP long-running processes work well if you carefully work on the operations, not just development</li>
+                      <li class="fragment">Know your limits: performance and efficiency</li>
+                      <li class="fragment">Cohesion and simplicity of your application win over technological terror </li>
                   </ul>
                   <aside class="notes">
                   </aside>
@@ -255,17 +305,19 @@ $shouldStop = function() use (&amp;$flag) {
 
               <section class="thank-you-section">
                     <h1>Thanks!</h1>
+                    <p style="float: right;"><a href="https://elifesciences.org">
+                      <img src="images/elife-logo.jpg" style="height: 8em" alt="I work for eLife Sciences" />
+                    </a></p>
                     <p><a href="https://twitter.com/giorgiosironi">@giorgiosironi</a> <a href="https://twitter.com/elife">@eLife</a></p>
                     <p><a href="mailto:g.sironi@elifesciences.org">g.sironi@elifesciences.org</a></p>
-                    <p><a href="https://elifesciences.org">
-                      <img src="images/elife-logo.jpg" style="float: right; width: 100%" alt="I work for eLife Sciences" />
-                    </a></p>
               </section>
             </div>
         </div>
         <script src="reveal.js/js/reveal.js"></script>
         <script>
-Reveal.initialize();
+        Reveal.initialize({
+            history: true,
+        });
         </script>
     </body>
 </html>
