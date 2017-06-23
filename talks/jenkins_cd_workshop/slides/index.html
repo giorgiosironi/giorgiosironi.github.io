@@ -1,0 +1,152 @@
+<html>
+    <head>
+
+		<meta charset="utf-8">
+
+        <title>
+            Continuous Delivery with Jenkins 2
+        </title>
+
+
+		<meta name="description" content="Continuous Delivery build with Jenkins 2.x Pipeline As Code features">
+		<meta name="author" content="Giorgio Sironi">
+        <link rel="stylesheet" href="reveal.js/css/reveal.css">
+        <link rel="stylesheet" href="reveal.js/css/theme/white.css">
+        <style>
+            table.differentiation {
+                font-size: smaller;
+            }
+            .small {
+                font-size: 10px;
+            }
+            img {
+                border: none !important;
+            }
+        </style>
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="reveal.js/lib/css/zenburn.css">
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section>
+                    <h1>Continuous Delivery with Jenkins 2</h1>
+                    <p>Giorgio Sironi</p>
+                    <p><small><em>If you are looking at these slides on your pc, there are speaker notes in the HTML</em></small></p>
+                </section>
+
+                <section>
+                  <p>Giorgio Sironi (<a href="https://twitter.com/giorgiosironi">@giorgiosironi</a>)</p>
+                  <div style="float: right; width: 20%" />
+                      <a href="https://twitter.com/giorgiosironi"><img src="images/elife_squared.jpg" style="float: right; width: 100%;" /></a>
+                      <!-- TODO: add link to eLife -->
+                      <img src="images/elife-logo.jpg" style="float: right; width: 100%" alt="I work for eLife Sciences" />
+                      <div style="float: right; width: 100%" />
+                          <img src="images/it.png" style="width: 45%" alt="Italy" />
+                          <img src="images/eu.jpg" style="width: 45%" alt="European Union" />
+                      </div>
+                  </div>
+                  <div style="float: left; width: 80%; margin-top: 5%"> 
+                      <ul class="build">
+                        <li>Software Engineer in Test (automates stuff for a living)</li>
+                        <li>What do I do
+                            <ul>
+                            <li>Distributed systems</li>
+                            <li>Automated complex tests, integrating many different projects</li>
+                            <li>Continuous Delivery</li>
+                            <li>Pasta and risotto</li>
+                            </ul>
+                        </li>
+                      </ul>
+                  </div>
+                  <aside class="notes">
+                      I am a SET, which is a term Google invented (and recently abandoned) to signify what you do when you turn Software Engineers to solve testing and related build/tooling/deployment problems. As such, I put together projects inside distributed systems, help test their integration and other non-functional requirements; with the goal of deploying new versions every hour without breaking.
+                  </aside>
+                </section>
+                <section>
+                  <h1>Classic Jenkins</h1>
+                  <img src="images/jenkins_home.png" alt="Jenkins homepage" />
+                  <aside class="notes">
+                      Jenkins is a classic Continuous Integration server, enjoying market dominance in all sort of locations. It is a heavyweight Java application, relying on many different plugins to provide you with the functionalities that you need.
+                      Jenkins automates part of software delivery: it doesn't write the code for you of course, but it can check out every new commit that you make on a project, and make sure it can be compiled and tested successfully; and if you have confirmed that it works as intended, why not deploying it to the production environment during the same build?
+                  </aside>
+                </section>
+
+                <section>
+                  <h1>Just shell scripts</h1>
+                  <img src="images/console_output.png" alt="Console output from a build" />
+                  <aside class="notes">
+                      It's turtles all the way down. There are many orchestration layers that CI tools provide on top of shell scripts, but in the end all builds have a standard output/error that is logged by the CI server along with important metadata such as the code revision (a commit sha), the time at which the build ran, or the trigger that started it.
+                  </aside>
+                </section>
+
+                <section>
+                  <h1>Pipelines</h1>
+                  <img src="images/sample_pipeline.png" alt="Jenkins sample pipeline" />
+                  <aside class="notes">
+                      Pipelines are a quite modern linear model for software delivery, or at least for the building blocks or more complex models that link together pipelines in different ways.
+                      In a pipeline, stages go from left to right and every stage only runs if the previous stage has been successfully completed. For example, you deploy to production only if the tests are green; you don't perform large-scale testing until you are sure unit tests are green.
+                      If a pipeline run fails, you need to trigger a new one, modifying the code or the environment to make it green.
+                  </aside>
+                </section>
+
+                <section>
+                  <h1>Pipeline as code...</h1>
+                  <img src="images/jenkinsfiles.png" alt="" />
+                  <aside class="notes">
+                      Historically Jenkins has been based on a point-and-click user interface, also oriented to non-developers.
+                      However, Jenkins introduced Groovy (a JVM scripting language) DSLs to configure it like you would do with a Vagrantfile or Dockerfile. That's where Jenkinsfile were born. A Jenkinsfile describe a pipeline (or one of the pipelines) for a project: how it is divided in stages, which steps to perform in each stage, and much metadata such as locks or concurrent processes.
+                  </aside>
+                </section>
+
+                <section>
+                  <h1>...as a key to automation</h1>
+                  <img src="images/pull_requests.png" alt="" />
+                  <aside class="notes">
+                      Once you have unlocked the pipeline/build logic from inside a tool like Jenkins, which can be unfriendly to developers and the rest of your team, you can the build upon this new layer. For starters, the pipeline is version-controlled. Then, you can make pull requests improving the pipeline and have a colleague review them. Or (totally unrelated), you can have a process automatically discovering all the projects that have a Jenkinsfile and build all their pull requests to give feedback on whether tests are passing. Automation, automation, automation.
+                      Moreover, the fact that these pipelines are expressed with a real programming language (Groovy) inside real Git repositories (along with the rest of the code from your projects) makes you able to remove duplication, improving names, and in general do whatever you do to your code to improve it.
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Time to work!</h1>
+                    <ul>
+                        <li><a href="http://tinyurl.com/jenkins-cd-workshop">http://tinyurl.com/jenkins-cd-workshop</a> a repository providing a turnkey Jenkins</li>
+                        <li><a href="https://github.com/jenkins-cd-workshop">https://github.com/jenkins-cd-workshop</a> a fictional Github user</li>
+                    </ul>
+                  <aside class="notes">
+                      We will use this Jenkins instance to create a few pipelines and show you how powerful this platform is. All repositories you will need are public and under the ownership of this Github user.
+                  </aside>
+                </section>
+
+              <section>
+                  <h1>Conclusions</h1>
+                  <ul>
+                      <li class="fragment">Representing processes as code not only automates them, but enables a new abstraction layer</li>
+                      <li class="fragment">Review, clone, refactor your pipelines</li>
+                      <li class="fragment">Real programming languages get you further than constrained configuration</li>
+                  </ul>
+                  <aside class="notes">
+                      Not much more I can say upon these points
+                  </aside>
+              </section>
+
+              <section class="thank-you-section">
+                    <h1>Thanks!</h1>
+                    <p style="float: right;"><a href="https://elifesciences.org">
+                      <img src="images/elife-logo.jpg" style="height: 8em" alt="I work for eLife Sciences" />
+                    </a></p>
+                    <p><a href="https://twitter.com/giorgiosironi">@giorgiosironi</a> <a href="https://twitter.com/elife">@eLife</a></p>
+                    <p><a href="mailto:g.sironi@elifesciences.org">g.sironi@elifesciences.org</a></p>
+              </section>
+            </div>
+        </div>
+        <script src="reveal.js/js/reveal.js"></script>
+        <script>
+        Reveal.initialize({
+            history: true,
+        });
+        </script>
+    </body>
+</html>
