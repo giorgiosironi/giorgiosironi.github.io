@@ -241,6 +241,20 @@ $shouldStop = function() use ($maximum) {
                   </aside>
                 </section>
 
+                <section>
+                    <h1>Problems: global state</h1>
+                      <pre><code style="font-size: 90%;" data-trim data-lang="php">
+                      global $db;
+                      CustomerSingleton::instance();
+                      $entityManager-&gt;close();
+                      </code></pre>
+                  <aside class="notes">
+                      A subtle problem is that of unwanted interaction between the transactions being performed by a long-running process, due to global state being carried over from one to the next. Not all global state is bad, as long as it is immutable or seen as immutable from the point of view of the application code (e.g. a buffering Logger). In fact, we plan on shared resources such as the PHP interpreter memory and the database connections being carried over between transactions; it is a foundation for the efficiency of long-running processes.
+                      However, global variables, singletons or Kernel-Application level objects may require tuning to correctly work in this environment. Some objects may need an explicit reset, like singletons pointing to specific customers or users (I hope you are not using those). Other more generic objects like Doctrine's EntityManager may need to be recreated or reopened if possible.
+                      This is usually not a problem if you have a clean architecture. When I started doing this talk I didn't even include it, but in the wild global state may bite you hard so it's useful to have a reminder.
+                  </aside>
+                </section>
+
                 <!--
                 <section>
                     <h1>Problems: locks</h1>
@@ -249,34 +263,38 @@ $shouldStop = function() use ($maximum) {
                 </section>
                 -->
 
-                <!--
                 <section>
                     <h1>Problems: bottlenecks</h1>
-+ resources
-++ are going to limit how many you can get
-++ CPU: only consumed when not on the blocking call
-++ memory
-+++ each process has its own isolated: multiprocesses, not multithreading
-+++ you can try optimizing this by forking a base process to leverage copy+on+write on the base memory allocated by the interpreter. In my opinion a shared nothing approach is easier to work with
-++ disk: if you write local logs. Only a problem if it gets into a bad loop or tries to log huge data structures
-++ external resources throughput (e.g. database too many queries). This is usually the most limiting factor
+                    <p><em>(in order of appearance)</em></p>
+                    <ul>
+                        <li class="fragment">Single threading<span class="fragment"> ...create more than one instance</span></li>
+                        <li class="fragment">Memory <span class="fragment"> ...horizontal scaling with more servers</span></li>
+                        <li class="fragment">CPU <span class="fragment">...horizontal scaling too</span></li>
+                        <li class="fragment">Database you're reading/writing <span class="fragment">...the usual profiling</span></li>
+                        <li class="fragment">External resources (e.g. rate limiting) <span class="fragment">...congratulations</span></li>
+                    </ul>
                   <aside class="notes">
+                      Usually these bottlenecks in throughput come up roughly in this order as you expand the number of transactions your long-running processes are daeling with.
+                      First that comes up is usually the single thread approach of PHP: every process can only work for a small interval of time before it's blocked by latency, waiting on an external API call or a database query. It only uses several unit percentage of CPU utilization. Optimizing latency is also a matter of algorithms and overall architecture, but as for throughput you should replicate your process leveraging parallelism.
+                      When you start replicating processes, available RAM (or sometimes CPU) become the next bottlenecks, depending on whether the work is data-intensive or computationally intensive. Fortunately, you can scale both by paying for more servers/containers to be added to your application, and this is almost linear scaling.
+                      Next up is the bottleneck of the database you are reading or writing from. Usually queues and job servers are optimized for this not to be a problem, but the work you are performing is relying on the databases backing up the state of your application to perform well. The usual profiling&amp;optimization routines apply here.
+                      If you really have optimized everything (optimized <em>enough</em>), you may end up in a situation where it's an external API that rate limits you. I can only say congratulations if you have reached this point, unless you have overlooked some optimizations there your problem may now be at the social or business level rather than technical.
                   </aside>
                 </section>
-                -->
 
-                <!--
                 <section>
                     <h1>Tools</h1>
-- Unix tools (debugging)
--- ps faxww, check all options matter
-- New Relic (VM-wide)
-- libraries
--- Symfony Console (why not? although the user interaction part is not needed, it's useful to parse arguments and have a standard OOP approach 
+                    <ul>
+                        <li class="fragment"><pre>ps afuxww<pre></li>
+                        <li class="fragment">New Relic APM and Server</li>
+                        <li class="fragment">Symfony Console and your own libraries</li>
+                    </ul>
                   <aside class="notes">
+                  `ps` is a wonderful Unix utility. The `afuxww` options try to give you a comprehensive listing of all the processes running on a server, plus some metadata about them like their state and user.
+                  New Relic can monitor both single instrumented processes (through the `newrelic` PHP extension) and full servers with CPU, RAM and I/O measurements. Especially if you have many processes or you spread them through different services, it's important to be notified of error rates going up on one category without having to check them manually.
+                  The PHP standard library is a thin veil over the POSIX standards. Symfony Console is a useful addition to build any command line process in a OO way, you won't use interactivity of course. You should also extract your own libraries to share between services once your team agrees on some design decisions.
                   </aside>
                 </section>
-                -->
 
                 <section>
                     <h1>Resources</h1>
@@ -300,6 +318,7 @@ $shouldStop = function() use ($maximum) {
                       <li class="fragment">Cohesion and simplicity of your application win over technological terror </li>
                   </ul>
                   <aside class="notes">
+                  Not much more to add.
                   </aside>
               </section>
 
