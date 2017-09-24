@@ -1,0 +1,354 @@
+<html>
+    <head>
+
+		<meta charset="utf-8">
+
+        <title>
+            Cheap and reproducible testing environments on AWS
+        </title>
+
+
+		<meta name="description" content="TODO">
+		<meta name="author" content="Giorgio Sironi">
+        <link rel="stylesheet" href="reveal.js/css/reveal.css">
+        <link rel="stylesheet" href="reveal.js/css/theme/white.css">
+        <style>
+            .small {
+                font-size: 10px;
+            }
+            img {
+                border: none !important;
+            }
+            h1 {
+                font-size: 1.8em !important;
+            }
+            h1.talk-title {
+                font-size: 2em !important;
+            }
+            table, tr, td {
+                border: 1px solid black !important;
+            }
+            td {
+                width: 50% !important;
+            }
+        </style>
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="reveal.js/lib/css/zenburn.css">
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section>
+                    <h1 class="talk-title">Cheap and reproducible testing environments on AWS</h1>
+                    <p>Giorgio Sironi</p>
+                    <p><small><em>If you are looking at these slides on your pc, there are speaker notes in the HTML</em></small></p>
+                </section>
+
+                <section>
+                  <p>Giorgio Sironi (<a href="https://twitter.com/giorgiosironi">@giorgiosironi</a>)</p>
+                  <div style="float: right; width: 20%" />
+                      <a href="https://twitter.com/giorgiosironi"><img src="images/elife_squared.jpg" style="float: right; width: 100%;" /></a>
+                      <!-- TODO: add link to eLife -->
+                      <img src="images/elife-logo.jpg" style="float: right; width: 100%" alt="I work for eLife Sciences" />
+                      <div style="float: right; width: 100%" />
+                          <img src="images/it.png" style="width: 45%" alt="Italy" />
+                          <img src="images/eu.jpg" style="width: 45%" alt="European Union" />
+                      </div>
+                  </div>
+                  <div style="float: left; width: 80%; margin-top: 5%"> 
+                      <ul class="build">
+                        <li>Software Engineer in Test (automates stuff for a living)</li>
+                        <li>What do I do
+                            <ul>
+                            <li>Distributed systems</li>
+                            <li>Automated complex tests, integrating many different projects</li>
+                            <li>Continuous Delivery</li>
+                            <li>Pasta and risotto</li>
+                            </ul>
+                        </li>
+                        <!-- TODO: add IT, EU flags -->
+                      </ul>
+                  </div>
+                  <aside class="notes">
+                      I am a SET, which is a term Google invented (and recently abandoned) to signify what you do when you turn Software Engineers to solve testing and related build/tooling/deployment problems. As such, I put together projects inside distributed systems, help test their integration and other non-functional requirements; with the goal of deploying new versions every hour without breaking.
+                  </aside>
+                </section>
+
+                <section>
+                  <img src="images/soa.jpg" />
+                  <!-- https://imgflip.com/i/1vsy83 -->
+                  <aside class="notes">
+                    Our 2017 publishing platform is service-oriented: it is not possible to satisfy user requirements from the inside of a Drupal monolith, which is the implementation of the previous major version of the platorm. 
+                    That said, you don't necessarily need to break down every single concern into a microservice, for a company of 30 people. We have about ~20 services, with varying degress of availability requirements and interconnectedness.
+                  </aside>
+                </section>
+
+                <section>
+                  <img src="images/elife_2_0.png" />
+                  <aside class="notes">
+                      So our architecture consists of medium-grained services, communicating with each other over HTTP. Most of these logical boxes run on one or more servers, providing multiple instances of a web server or of a database. The servers are virtual, EC2 isntances provided by AWS. We find this level of abstraction very flexible as you can run practically anything in a virtual machine, and at the same time run the same software locally for development through Vagrant. It's a pretty standard (if not old style nowadays) approach.
+                  </aside>
+                </section>
+
+                <section>
+                  <h1>Production environment</h1>
+                  <img src="images/prod-end2end.png" />
+                  <aside class="notes">
+                      The production environment consists of &gt;20 servers. Some projects can be deployed on managed infrastructure (think static website on S3) but most are simple web services that need a virtual machine (EC2). The public facing ones will need at least 2 instances, for high availability (if one virtual machine suffers an underlying hardware failure or a similar interruption) and zero downtime deployment (replacing the service with a new version, on one server at a time).
+                  </aside>
+                </section>
+
+                <section>
+                  <h1>End2end environment</h1>
+                  <img src="images/prod-end2end.png" />
+                  <aside class="notes">
+                      Called like this because end2end tests run there.
+                      The end2end environment is built for automated testing only (and sometime experimentation). It is identical to the production environment, especially when using many managed services like RDS, Elasticache, S3 buckets, SQS queues and so on. Otherwise how can you find out about bugs in the provisioning and orchestration? Where you can actually integrate with the outsourced technologies? Where can you test an architectural change like replacing disks with SSDs? This has saved us multiple times where we found out about missing configurations, caching problems, services misunderstanding their communication protocol. End2end tests are slow and more brittle than project-level tests, but the top of the pyramid can't be completely substituted.
+                      There are some simplifications you can make, like having 2 servers as a minimal cluster even if in production you have 3.
+                      Moreover, some of the servers needed there are quite powerful to run lots of tests in parallel, one of the backends had a c4.4xlarge to run many image resizes in parallel. 
+                  </aside>
+                </section>
+
+                <section>
+                  <h1>Ci environment</h1>
+                  <img src="images/ci.png" />
+                  <aside class="notes">
+                      The ci environment is called like this because the first layer of tests (a project in isolation) runs there. Feature branches living 1 or 2 days are also built there, in addition to all new commits on the mainline.
+                      The ci environment is simpler than end2end because you only need one server per service, test suites are usually limited to one process and are not smart enough to use effectively more than one virtual machine for a given codebase. Sometimes you have data-oriented tests that benefit from many (expensive) CPU cores, like when we run the entire corpus of years of articles through a conversion process, but it's rare to need more for a single service. Yet there are many servers anyway because of the sheer number of different services.
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Breaking the bank</h1>
+                    <img src="images/piggy.jpg" alt="Piggy bank" />
+                  <aside class="notes">
+                      We have funding, you know, but I'm not give a c4.xlarge instance to make tests run faster. It costs a lot compared to these cheap t2.
+                      It makes sense as costs are not added together but actually multiplied with each other: number of services, times number of servers needed per service, times number of environments. Running one virtual server is relatively cheap compared to the costs of developers, but at scale you need some optimization.
+                      Yet testing environments are very valuable: the ci layer provides feedback to developers in minutes on every new commit; the end2end layer provides feedback (albeit in a slower way) that you couldn't possibly get elsewhere if not by trying things in production (for the happiness of your customers).
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Objections</h1>
+                    <img src="images/objection.png" alt="I have an objection" />
+                  <aside class="notes">
+                      You may have some objections to finding a solution to testing environment costs in this situation. However, engineering is made of constraints. And while this is a platform that works in production, suggesting to change the architecture to avoid some constraints (like running multiple machines) may introduce other problems that we don't know about yet (unknown unknowns), just because we haven't spent a couple years on that approach.
+                  </aside>
+                </section>
+
+                <section>
+                    <h1>Objections</h1>
+                    <ul>
+                        <li>Containers</li>
+                        <li>"Serverless"</li>
+                        <li>Travis CI (and similar)</li>
+                    </ul>
+                    <aside class="notes">
+                        I should just deploy applications in the form of containers everywhere. They have a fast startup time and can share the resources of an EC2 fleet for hosting. But there are advantages to virtual machines like maturity and strong isolation of resources, and the fact that all existing projects that predate Docker-mania were built like that.
+                        You could reimplement everything in the form of JavaScript functions stored as blobs on S3 and integrating with each other through proprietary protocols. What could possibly go wrong?
+                        Travis CI and other build-as-a-service products are great for portable libraries, but I haven't find them flexible enough to build customized servers or a production-like environment (unless you deploy on Travis CI as a production environment?) In CI environments you have a maintenance problem where the same setup of the application is shared between the Travis build and what you use in production. In end2end environments you have to connect together multiple services in a complex topology, provisioning DNS entries, databases and all sort of resources so a single build doesn't cut it.
+                    </aside>
+                </section>
+
+                <section>
+                    <img src="images/to-the-cloud.jpg" alt="To the cloud!" />
+                    <aside class="notes">
+                        Builds and test suites are a dynamic load, that varies widely during the day and the week. For example, if you are not geographically distributed the load is high during the day and low at night (scheduled jobs). It's very low during weekends and holidays (right?!) But when everyone is churning new pull requests in a busy morning, there are spikes.
+                        Isn't the promise of the cloud that we can dynamically adapt to load, paying only for what we use? For AWS EC2 this promise is fulfilled with a robust orchestration layer and a granularity of 1 hour (recently changing to the order of minutes). I'm here to help you with that robust orchestration layer.
+                        It's pretty clear then that we can't keep our environments functional all the time, but we should instead pursue a on-demand strategy.
+                    </aside>
+                </section>
+
+                <section>
+                    <table>
+                        <tr>
+                            <td>Server-based services</td>
+                            <td>Shared resources</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td>Web servers, databases</td>
+                            <td>Queues, CDNs, ...</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td>EC2, RDS, ElastiCache</td>
+                            <td>S3, SQS, CloudFront</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>Pay by the hour</strong></td>
+                            <td><strong>Pay per use</strong></td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>Optimize</strong></td>
+                            <td>Don't worry about it</td>
+                        </tr>
+                    </table>
+                    <aside class="notes" />
+                        The bulk of the costs (in a testing environment) then come from resources that map directly to servers and you pay by the hour: EC2 instances and (secondary depending on your usage) RDS.
+                        By definition, you don't have to worry about the pay-per-use cloud services: you'll only pay what you actually use anyway; you can still optimized how much you use them, for example cleaning testing databases nightly to stay into a low-cost space tier.
+                        But with servers, you are paying even if they sit idle at 1% CPU utilization. So you want to actually run them only when needed.
+                    </aside>
+                </section>
+
+                <section>
+                    <img src="images/phoenix.jpg" alt="A phoenix dies and rises from its ashes" style="height: 15em" />
+                    <aside class="notes" />
+                        You may want to build EC2 instances from scratch starting from an AMI, or even to dynamically instantiate a CloudFormation template when you need it. However, the overhead of provisioning new resources is still significant for test suites. You may have a test suite that takes 5 (single project) or 20 (end2end) minutes to run. It's not efficient to create everything from scratch whenever you need it, as for some resources you only pay for usage and there are lots of things that can go wrong during the initial creation.
+                        For example, to provision a CloudFront CDN for end2end tests, it takes ~1 hour. However you only pay for the data actually transferred through it. And you don't want to wait 1 hour to find out the DNS name is conflicting with something else and the creation is rolled back.
+                    </aside>
+                </section>
+
+                <section>
+                    <h1>Persist</h1>
+                    <img src="images/ec2-ebs.png" />
+                    <aside class="notes" />
+                        Here is a typical EC2 instance for one of our project. For general purpose instances, EC2 has moved away almost everywhere from instance-backed store, which is ephemeral, to favor EBS. EBS is a block-oriented storage (think of /dev/sdX descriptors to mount) remote to the instance but located and replicated in the same data center. So good combination of low latency and durability. It can still fail, but it allows you to stop and start instances as you would with a server.
+                </section>
+
+                <section>
+                    <h1>EC2 lifecycle</h1>
+                    <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html">
+                        <img src="images/instance_lifecycle.png" alt="Lifecycle of an EC2 instance, showing start and stop commands and their transitions" />
+                    </a>
+                    <aside class="notes" />
+                        Since EC2 started relying on this SAN, in fact, it gained the "start" and "stop" API calls. Stop really means to free the physical server that was hosting the virtual machine by shutting it down; but the EBS for its / root volume remains around. Start means to find another physical server that has resources (CPU, RAM, bandwidth) to allocate the virtual machine persisted on the EBS.
+                    </aside>
+                </section>
+
+                <section>
+                    <h1>Costs 
+                        <a href="https://aws.amazon.com/ec2/pricing/on-demand/">EC2</a>
+                        vs
+                        <a href="https://aws.amazon.com/ebs/pricing/">EBS</a>
+                    </h1>
+                    <table>
+                        <tr>
+                            <td>t2.small</td>
+                            <td>$0.74/day</td>
+                        </tr>
+                        <tr>
+                            <td>t2.medium</td>
+                            <td>$1.46/day</td>
+                        </tr>
+                        <tr>
+                            <td>t2.large</td>
+                            <td>$2.88/day</td>
+                        </tr>
+                        <tr>
+                            <td>t2.xlarge</td>
+                            <td>$5.86/day</td>
+                        </tr>
+                        <tr>
+                            <td>c4.4xlarge</td>
+                            <td>$23.93/day</td>
+                        </tr>
+                        <tr>
+                            <td>SSD gp2, 10 GB</td>
+                            <td>$1.20/<strong>month</strong></td>
+                        </tr>
+                    </table>
+                    <aside class="notes">
+                        The cost of computation dwarfs the cost of storage.
+                    </aside>
+                </section>
+
+                <section>
+                    <h1>Starting</h1>
+                    <pre>
+aws ec2 start-instances --instance-ids i-1234567890
+// poll for started state:
+aws ec2 describe-instances --instance-id i-1234567890
+// poll with ssh that you can connect
+// (optionally) poll for some smoke test to pass
+// update DNS with new public ip
+</pre>
+<!-- // poll /var/lib/cloud/instance/boot-finished applicable to new boots, not sure on restarts -->
+                    <aside class="notes" />
+                        Stopping an instance is easy, restarting it is more difficult.
+                        Actually I do this with Python, but I show it with the cli since it's universal.
+                    </aside>
+                </section>
+
+                <section>
+                    <h1>Stopping</h1>
+                    <pre>
+aws ec2 stop-instances --instance-ids i-1234567890
+// poll for stopped state:
+aws ec2 describe-instances --instance-ids i-1234567890
+</pre>
+                    <aside class="notes" />
+                        You stop paying as soon as the status changes from `running` to `stopping`.
+                        More than stopping, the problem is knowing when to stop.
+                        Periodical build that checks whether instances are between X:55 and X:60 minutes from start, leveraging the full hour that has been paid and stopping before they go into the next
+                        Now changing that... it's billed minute by minute, so will probably shrink to anything more than 0:15? 0:30? So that if there are many builds in sequence they have the time to run.
+                    </aside>
+
+                </section>
+                
+                <section>
+                    Lock system: Jenkins and Lockable resources plugin
+                    <img src="images/locks.png" />
+                    <aside class="notes" />
+                        Starting and stopping instances periodically would be otherwise dangerous if there wasn't a mechanism for mutual exclusion between builds and lifecycle operations like starting and stopping. Not only you don't want to run builds for the same project on the same instance if they interfere with each other, but you definitely don't want an instance to be shutdown while a build is still running.
+                        Therefore, we wrap both these lifecycle operations and builds in locks for resource, using Jenkins Lockable Resources plugin. If the periodical stopping task tries to stop an instance where the build is running, it will have to wait to acquire the lock. This ensures that machines that see many builds do not get easily stopped, while other ones that are idle will be stopped at the end of their already paid hour.
+                    </aside>
+                </section>
+
+                <section>
+                    <img src="images/no-cloud.jpg" />
+                </section>
+
+                <section>
+                    <pre style="font-size: 120%">
+Error:
+InsufficientInstanceCapacity</pre>
+                    <!-- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-capacity.html -->
+                    <aside class="notes">
+                        It's not that AWS is out of servers, but you are requesting a particular combination of instance size (t2.small) in a fixed availability zone (us-east-1d) which is decided at creation time. AWS shifts capacity between the instance sizes (can't do it between availability zones as they are physically in different places).
+                    </aside>
+                </section>
+
+                <section>
+                    <h1>There's more!</h1>
+                    <ul>
+                        <li>RDS <a href="https://aws.amazon.com/about-aws/whats-new/2017/06/amazon-rds-supports-stopping-and-starting-of-database-instances/">can start/stop</a> too</li>
+                        <li>EC2 is starting to <a href="https://aws.amazon.com/blogs/aws/new-per-second-billing-for-ec2-instances-and-ebs-volumes/">bill by the second</a></li>
+                    </ul>
+                </section>
+              <section>
+                  <h1>Conclusions</h1>
+                  <ul>
+                      <li class="fragment">Know the pain points of your cloud architecture</li>
+                      <li class="fragment">Work to <a href="http://www.giorgiosironi.com/2016/11/how-to-run-continuous-integration-on.html">solve these problems</a> leveraging its strengths</li>
+                      <li class="fragment">Optimize in the right place</li>
+                  </ul>
+                  <aside class="notes">
+                      Know where your approach is at a disadvantage, for example creating reliable testing environments that however cost a lot to maintain.
+                      Work within your constraints and used the underlying platform at its best. It's not all marketing, some services really are good if you know them inside out.
+                      Most of all however, you have to focus your optimization in the right place, where it can make the most difference with the least effort.
+                  </aside>
+              </section>
+
+              <section class="thank-you-section">
+                    <h1>Thanks!</h1>
+                    <p style="float: right;"><a href="https://elifesciences.org">
+                      <img src="images/elife-logo.jpg" style="height: 8em" alt="I work for eLife Sciences" />
+                    </a></p>
+                    <p><a href="https://twitter.com/giorgiosironi">@giorgiosironi</a> <a href="https://twitter.com/elife">@eLife</a></p>
+                    <p><a href="mailto:g.sironi@elifesciences.org">g.sironi@elifesciences.org</a></p>
+              </section>
+              <section>
+                  <h1>Image credits</h1>
+                  https://commons.wikimedia.org/wiki/File:Saving_money.jpg
+                  https://peurdunoir.deviantart.com/art/Harry-Potter-and-the-Order-of-the-Phoenix-384799893
+              </section>
+            </div>
+        </div>
+        <script src="reveal.js/js/reveal.js"></script>
+        <script>
+        Reveal.initialize({
+            history: true,
+        });
+        </script>
+    </body>
+</html>
