@@ -31,6 +31,25 @@
             td {
                 width: 50% !important;
             }
+            .environment-container {
+                position: relative;
+            }
+            .environment-times {
+                height: 5%;
+                width: 5%;
+                position: absolute;
+                padding: 2em !important;
+                bottom: 0px;
+                right: 0px; 
+                z-index: 100;
+                font-size: 2em !important;
+                color: black;
+            }
+            .prod-environment {
+                height: 90% !important;
+                width: 90% !important;
+                z-index: 10;
+            }
         </style>
 
 		<!-- For syntax highlighting -->
@@ -87,26 +106,28 @@
                 <section>
                   <img src="images/elife_2_0.png" />
                   <aside class="notes">
-                      So our architecture consists of medium-grained services, communicating with each other over HTTP. Most of these logical boxes run on one or more servers, providing multiple instances of a web server or of a database. The servers are virtual, EC2 isntances provided by AWS. We find this level of abstraction very flexible as you can run practically anything in a virtual machine, and at the same time run the same software locally for development through Vagrant. It's a pretty standard (if not old style nowadays) approach.
+                      So our architecture consists of medium-grained services, communicating with each other over HTTP. Most of these logical boxes run on one or more servers, providing multiple instances of a web server or of a database. The servers are virtual machines, EC2 instances provided by AWS. We find this level of abstraction very flexible as you can run practically anything in a virtual machine, and at the same time run the same software locally for development through Vagrant. It's a pretty standard (if not old style nowadays) approach.
                   </aside>
                 </section>
 
-                <section>
+                <section class="environment-container">
                   <h1>Production environment</h1>
-                  <img src="images/prod-end2end.png" />
+                  <div class="fragment environment-times">12x</div>
+                  <img src="images/prod-end2end.png" class="prod-environment" />
                   <aside class="notes">
-                      The production environment consists of &gt;20 servers. Some projects can be deployed on managed infrastructure (think static website on S3) but most are simple web services that need a virtual machine (EC2). The public facing ones will need at least 2 instances, for high availability (if one virtual machine suffers an underlying hardware failure or a similar interruption) and zero downtime deployment (replacing the service with a new version, on one server at a time).
+                      The production environment consists of &gt;20 EC2 instances. Some projects can be deployed on managed infrastructure (think static website on S3) but most are simple web services that need a virtual machine (EC2). The public facing ones will need at least 2 instances, for high availability (if one virtual machine suffers an underlying hardware failure or a similar interruption) and zero downtime deployment (replacing the service with a new version, on one instance at a time).
                   </aside>
                 </section>
 
-                <section>
+                <section class="environment-container">
                   <h1>End2end environment</h1>
-                  <img src="images/prod-end2end.png" />
+                  <div class="environment-times">12x</div>
+                  <img src="images/prod-end2end.png" class="prod-environment" />
                   <aside class="notes">
                       Called like this because end2end tests run there.
-                      The end2end environment is built for automated testing only (and sometime experimentation). It is identical to the production environment, especially when using many managed services like RDS, Elasticache, S3 buckets, SQS queues and so on. Otherwise how can you find out about bugs in the provisioning and orchestration? Where you can actually integrate with the outsourced technologies? Where can you test an architectural change like replacing disks with SSDs? This has saved us multiple times where we found out about missing configurations, caching problems, services misunderstanding their communication protocol. End2end tests are slow and more brittle than project-level tests, but the top of the pyramid can't be completely substituted.
-                      There are some simplifications you can make, like having 2 servers as a minimal cluster even if in production you have 3.
-                      Moreover, some of the servers needed there are quite powerful to run lots of tests in parallel, one of the backends had a c4.4xlarge to run many image resizes in parallel. 
+                      The end2end environment is built for automated testing only (and sometime experimentation). It is identical to the production environment, especially when using many managed servers like RDS, Elasticache, S3 buckets, SQS queues and so on. Otherwise how can you find out about bugs in the provisioning and orchestration? Where you can actually integrate with the outsourced technologies? Where can you test an architectural change like replacing disks with SSDs? This has saved us multiple times where we found out about missing configurations, caching problems, services misunderstanding their communication protocol. End2end tests are slow and more brittle than project-level tests, but the top of the pyramid can't be completely substituted.
+                      There are some simplifications you can make, like having 2 instances as a minimal cluster even if in production you have 3.
+                      Moreover, some of the instances needed there are quite powerful to run lots of tests in parallel, one of the backends had a c4.4xlarge to run many image resizes in parallel. 
                   </aside>
                 </section>
 
@@ -115,7 +136,7 @@
                   <img src="images/ci.png" />
                   <aside class="notes">
                       The ci environment is called like this because the first layer of tests (a project in isolation) runs there. Feature branches living 1 or 2 days are also built there, in addition to all new commits on the mainline.
-                      The ci environment is simpler than end2end because you only need one server per service, test suites are usually limited to one process and are not smart enough to use effectively more than one virtual machine for a given codebase. Sometimes you have data-oriented tests that benefit from many (expensive) CPU cores, like when we run the entire corpus of years of articles through a conversion process, but it's rare to need more for a single service. Yet there are many servers anyway because of the sheer number of different services.
+                      The ci environment is simpler than end2end because you only need one virtual machine per service, test suites are usually limited to one process and are not smart enough to use effectively more than one virtual machine for a given codebase. Sometimes you have data-oriented tests that benefit from many (expensive) CPU cores, like when we run the entire corpus of years of articles through a conversion process, but it's rare to need more for a single service. Yet there are many instances anyway because of the sheer number of different services.
                   </aside>
                 </section>
 
@@ -124,7 +145,7 @@
                     <img src="images/piggy.jpg" alt="Piggy bank" />
                   <aside class="notes">
                       We have funding, you know, but I'm not give a c4.xlarge instance to make tests run faster. It costs a lot compared to these cheap t2.
-                      It makes sense as costs are not added together but actually multiplied with each other: number of services, times number of servers needed per service, times number of environments. Running one virtual server is relatively cheap compared to the costs of developers, but at scale you need some optimization.
+                      It makes sense as costs are not added together but actually multiplied with each other: number of services, times number of virtual machines needed per service, times number of environments. Running one virtual machine is relatively cheap compared to the costs of developers, but at scale you need some optimization.
                       Yet testing environments are very valuable: the ci layer provides feedback to developers in minutes on every new commit; the end2end layer provides feedback (albeit in a slower way) that you couldn't possibly get elsewhere if not by trying things in production (for the happiness of your customers).
                   </aside>
                 </section>
@@ -140,9 +161,9 @@
                 <section>
                     <h1>Objections</h1>
                     <ul>
-                        <li>Containers</li>
-                        <li>"Serverless"</li>
-                        <li>Travis CI (and similar)</li>
+                        <li class="fragment">Containers</li>
+                        <li class="fragment">"Serverless"</li>
+                        <li class="fragment">Travis CI (and similar)</li>
                     </ul>
                     <aside class="notes">
                         I should just deploy applications in the form of containers everywhere. They have a fast startup time and can share the resources of an EC2 fleet for hosting. But there are advantages to virtual machines like maturity and strong isolation of resources, and the fact that all existing projects that predate Docker-mania were built like that.
@@ -163,7 +184,7 @@
                 <section>
                     <table>
                         <tr>
-                            <td>Server-based services</td>
+                            <td>Server-based resources</td>
                             <td>Shared resources</td>
                         </tr>
                         <tr class="fragment">
@@ -184,9 +205,9 @@
                         </tr>
                     </table>
                     <aside class="notes" />
-                        The bulk of the costs (in a testing environment) then come from resources that map directly to servers and you pay by the hour: EC2 instances and (secondary depending on your usage) RDS.
+                        The bulk of the costs (in a testing environment) then come from resources that map directly to underlying servers and you pay by the hour: EC2 instances and (secondary depending on your usage) RDS.
                         By definition, you don't have to worry about the pay-per-use cloud services: you'll only pay what you actually use anyway; you can still optimized how much you use them, for example cleaning testing databases nightly to stay into a low-cost space tier.
-                        But with servers, you are paying even if they sit idle at 1% CPU utilization. So you want to actually run them only when needed.
+                        But with virtual machines, you are paying even if they sit idle at 1% CPU utilization. So you want to actually run them only when needed.
                     </aside>
                 </section>
 
@@ -202,7 +223,7 @@
                     <h1>Persist</h1>
                     <img src="images/ec2-ebs.png" />
                     <aside class="notes" />
-                        Here is a typical EC2 instance for one of our project. For general purpose instances, EC2 has moved away almost everywhere from instance-backed store, which is ephemeral, to favor EBS. EBS is a block-oriented storage (think of /dev/sdX descriptors to mount) remote to the instance but located and replicated in the same data center. So good combination of low latency and durability. It can still fail, but it allows you to stop and start instances as you would with a server.
+                        Here is a typical EC2 instance for one of our project. For general purpose instances, EC2 has moved away almost everywhere from instance-backed store, which is ephemeral, to favor EBS. EBS is a block-oriented storage (think of /dev/sdX descriptors to mount) remote to the instance but located and replicated in the same data center. So good combination of low latency and durability. It can still fail, but it allows you to stop and start instances as you would with your laptop.
                 </section>
 
                 <section>
@@ -276,6 +297,7 @@ aws ec2 stop-instances --instance-ids i-1234567890
 // poll for stopped state:
 aws ec2 describe-instances --instance-ids i-1234567890
 </pre>
+                    <img class="fragment" src="images/clock.png" style="height: 4em; box-shadow: none;" />
                     <aside class="notes" />
                         You stop paying as soon as the status changes from `running` to `stopping`.
                         More than stopping, the problem is knowing when to stop.
@@ -304,7 +326,7 @@ Error:
 InsufficientInstanceCapacity</pre>
                     <!-- http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-capacity.html -->
                     <aside class="notes">
-                        It's not that AWS is out of servers, but you are requesting a particular combination of instance size (t2.small) in a fixed availability zone (us-east-1d) which is decided at creation time. AWS shifts capacity between the instance sizes (can't do it between availability zones as they are physically in different places).
+                        It's not that you have exhausted AWS, but you are requesting a particular combination of instance size (t2.small) in a fixed availability zone (us-east-1d) which is decided at creation time. AWS shifts capacity between the instance sizes (can't do it between availability zones as they are physically in different places).
                     </aside>
                 </section>
 
@@ -324,7 +346,7 @@ InsufficientInstanceCapacity</pre>
                   </ul>
                   <aside class="notes">
                       Know where your approach is at a disadvantage, for example creating reliable testing environments that however cost a lot to maintain.
-                      Work within your constraints and used the underlying platform at its best. It's not all marketing, some services really are good if you know them inside out.
+                      Work within your constraints and used the underlying platform at its best. It's not all marketing, some vendors really are good if you know them inside out. I'm no particular fan of AWS but their APIs are extensive and complete.
                       Most of all however, you have to focus your optimization in the right place, where it can make the most difference with the least effort.
                   </aside>
               </section>
@@ -341,6 +363,7 @@ InsufficientInstanceCapacity</pre>
                   <h1>Image credits</h1>
                   https://commons.wikimedia.org/wiki/File:Saving_money.jpg
                   https://peurdunoir.deviantart.com/art/Harry-Potter-and-the-Order-of-the-Phoenix-384799893
+                  https://commons.wikimedia.org/wiki/File:Clock_face_one_hand.png
               </section>
             </div>
         </div>
