@@ -132,6 +132,14 @@
                   </aside>
                 </section>
 
+                <section class="environment-container">
+                  <img src="images/end2end-vs-prod.jpg" />
+                  <aside class="notes">
+                      End2end and prod must be similar, very similar.
+                  </aside>
+                </section>
+
+
                 <section>
                   <h1>Ci environment</h1>
                   <img src="images/ci.png" />
@@ -143,9 +151,9 @@
 
                 <section>
                     <h1>Breaking the bank</h1>
-                    <img src="images/piggy.jpg" alt="Piggy bank" />
+                    <img src="images/sysadmin.jpg" />
                   <aside class="notes">
-                      We have funding, you know, but I'm not give a c4.xlarge instance to make tests run faster. It costs a lot compared to these cheap t2.
+                      We have funding, you know, but I'm not run a c4.8xlarge instance to make tests run faster, says the sysadmin. It costs a lot compared to these cheap t2.
                       It makes sense as costs are not added together but actually multiplied with each other: number of services, times number of virtual machines needed per service, times number of environments. Running one virtual machine is relatively cheap compared to the costs of developers, but at scale you need some optimization.
                       Yet testing environments are very valuable: the ci layer provides feedback to developers in minutes on every new commit; the end2end layer provides feedback (albeit in a slower way) that you couldn't possibly get elsewhere if not by trying things in production (for the happiness of your customers).
                   </aside>
@@ -221,7 +229,7 @@
                 </section>
 
                 <section>
-                    <h1>Persist</h1>
+                    <h1>Persistence</h1>
                     <img src="images/ec2-ebs.png" />
                     <aside class="notes" />
                         Here is a typical EC2 instance for one of our project. For general purpose instances, EC2 has moved away almost everywhere from instance-backed store, which is ephemeral, to favor EBS. EBS is a block-oriented storage (think of /dev/sdX descriptors to mount) remote to the instance but located and replicated in the same data center. So good combination of low latency and durability. It can still fail, but it allows you to stop and start instances as you would with your laptop.
@@ -271,6 +279,13 @@
                     </table>
                     <aside class="notes">
                         The cost of computation dwarfs the cost of storage.
+                    </aside>
+                </section>
+
+                <section>
+                    <img src="images/start.jpg" />
+                    <aside class="notes">
+                        What seems a simple API call is never straightforward.
                     </aside>
                 </section>
 
@@ -362,7 +377,6 @@ InsufficientInstanceCapacity</pre>
               </section>
               <section>
                   <h1>Image credits</h1>
-                  https://commons.wikimedia.org/wiki/File:Saving_money.jpg
                   https://peurdunoir.deviantart.com/art/Harry-Potter-and-the-Order-of-the-Phoenix-384799893
                   https://commons.wikimedia.org/wiki/File:Clock_face_one_hand.png
               </section>
