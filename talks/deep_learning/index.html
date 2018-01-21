@@ -207,9 +207,9 @@
                     <h1>A lot to learn</h1>
                     <ul>
                         <li>possibly millions of weights</li>
-                        <li>which kind of layers work best for this problem?</li>
-                        <li>how many layers should we stack into the network?</li>
-                        <li>vanishing gradients slow down training of layers far from the outputs</li>
+                        <li>feature extraction: which and how many layers work best for this problem?</li>
+                        <!--<li>vanishing gradients slow down training of layers far from the outputs</li>-->
+                        <li>does the brain really work like that?</li>
                     </ul>
                     <aside class="notes">
                         Some of the problems can be solved by sheer computational brute force: learning the weights of such a complex network with enough GPU in your datacenter or private cloud. Other need more theory, literature and experimentation: the convolutional and subsampling layers have been proven to work in the field of image recognition, but every domain can be different.
@@ -217,7 +217,7 @@
                 </section>
 
                 <section>
-                    <h1>AlphaGo figures</h1>
+                    <h1>AlphaGo: supervised</h1>
                     <blockquote><strong>On training set:</strong> This data set contains 29.4 million positions from 160,000 games played by KGS 6 to 9 dan human players</blockquote>
                     <blockquote><strong>On training time and resources: </strong>The value network was trained for 50 million mini-batches of 32 positions, using 50 GPUs, for one week.</blockquote>
                     <aside class="notes">
@@ -226,6 +226,14 @@
                 </section>
 
                 <section>
+                    <h1>Alpha(Go) Zero: reinforcement</h1>
+                    <img src="img/alphagozero.jpg" />
+                    <aside class="notes">
+                        AlphaGo Zero is a recent evolution of AlphaGo that does not use training data. It plays against itself to improve its performance. It's more of an algorithmic breakthrough that brute force search: when evolved (into Alpha Zero) to play chess rather than Go, it searches thousands rather than millions of position per seconds, still outplaying its adversaries.
+                        The trick of reinforcement learning (and adversarial learning) is that the data needed for training can be generated from clear cut rules (like the rules of a board game). It remains to be seen how this approach can be extended to other domains, for example by distinguishing between generating and discriminator networks (where the first attempts to fool the second).
+                    </aside>
+                </section>
+                <section>
                     <h1>References</h1>
                     <ul>
                         <li><a href="https://en.wikipedia.org/wiki/Dartmouth_Conferences">Dartmouth conference</a></li>
@@ -233,6 +241,7 @@
                         <li><a href="http://neuralnetworksanddeeplearning.com/chap2.html">Training with backpropagation</a></li>
                         <li><a href="https://gogameguru.com/i/2016/03/deepmind-mastering-go.pdf">The AlphaGo paper</a></li>
                         <li><a href="http://arxiv.org/abs/1404.7828">Schmidhuber's review paper on neural networks</a></li>
+                        <li><a href="https://deepmind.com/blog/alphago-zero-learning-scratch/">AlphaGo Zero</a></li>
                     </ul>
                 </section>
 
