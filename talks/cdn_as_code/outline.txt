@@ -1,0 +1,49 @@
+- 2017:
+-- scientific journal
+-- new website just launched
+-- host of AWS technologies and lock in, CloudFront as a CDN, CloudFormation for managing everything declaratively
+- what's a CDN?
+- what's Infrastructure as Code?
+- but then
+-- we're going to use... Fastly!
+-- introduce Boss
+--- so cool, and it takes minutes to change its configuration rather than >1 hour with CloudFront
+- how do we do this?
+-- point and click in a panel
+--- horrible and unreproducible
+--- especially reproducibility for testing
+-- check out Fastly APIs
+--- LOTS of work to create everything there, and to maintain it and do a diff and delete it
+--- sounds like a common problem
+-- Terraform provider
+--- but we use CloudFormation
+--- we use Python code to generate CloudFormation templates
+--- so why not start from the same description and generate also Terraform resources?
+-- limitations
+--- one runs after the other (or concurrently if you hate your life); no dependency resolution across the two (DNS in CloudFormation, Fastly services using them in Terraform)
+--- using Terraform by running an external process rather than some kind of binding, unparseable output
+---- at least input is clear, .tf.json files
+-- keeping a single source of truth in the form of a Git repository
+--- gets applied to various providers (AWS, Fastly) through various tools (CloudFormation, Terraform)
+--- hopefully fewer tools than providers
+-- testing environments
+--- exact same code, customize the domain (`end2end--journal.elifesciences.org` or `staging--journal.elifesciences.org`)
+---- points to completely separate resources: servers but also DNS entries or other entities like S3 buckets
+-- process
+--- manual: infrastructure changes can easily delete a production database
+---- start with end2end, re-run automated tests afterwards
+---- apply to staging, do exploratory tests if you need to confirm everything works as expected
+---- apply to prod
+---- user monitoring
+-- wait, logs?
+--- CDN can deliver to various destination: S3, Google Cloud Storage, BigQuery
+--- more infrastructure as code: create the buckets or the BigQuery datasets
+---- thankfully with Terraform there is the Google Cloud provider included
+---- validates this new approach is scalable to even more providers
+--- BigQuery almost real time, buckets every minute or other interval
+
+TO be evaluated:
+- additional part with VCL
+-- introduce Developer
+-- templating of custom language and its integration with Terraform
+-- Developer contributing to the Infrastructure as Code layer

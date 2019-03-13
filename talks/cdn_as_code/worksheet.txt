@@ -1,0 +1,36 @@
+https://speakerdeck.com/virtualgill/planning-a-technical-talk?slide=2
+
+Purpose 
+Why am I telling this story? To give people hope that Infrastructure as Code can be used consistently despite the pressure from an organization to adopt random tools
+What do I want people to know? That you can be flexible and respond to the needs of your team
+What do I want people to have learnt? How to evaluate constraints and tools to provide a working solution to the problem, without giving up your principles
+
+Story
+start: we have just finished deploying the new website with an ensemble of AWS technologies, CloudFormation, multiple environments... and Fastly comes in
+end: we now can create new Fastly CDNs in minutes via writing a 10-line configuration
+steps:
+- panic
+- do we really want to move away from CloudFront?
+- evaluate Fastly API
+- find out about the Terraform provider
+- credentials, get in Vault
+- generate the Terraform stuff like for CloudFormation
+- roll out first in testing environments, make automated tests go through it
+- finally switch production
+
+Audience
+- generic full stack developers, perhaps frontend perhaps backend
+
+Assumptions
+- know how HTTP works
+- what a CDN sort of is
+- why testing is important
+
+Characters
+- SETI: me. Started from coding features but now builds testing environments via Infrastructure as Code.
+- Developer. Fond of web design and web performance. Have used Varnish before and wants to do more.
+- Boss. Used Fastly at scale to deliver music across the world.
+
+Scene settings
+- we are a scientific journal, digital only so website is one of the few publicly visible parts of our software but also the one with the largest public.
+- we transitioned away from outsourced technology as the journal was growing, now the whole "production" is done in-house
