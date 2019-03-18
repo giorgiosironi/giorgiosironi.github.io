@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>Deep learning</title>
+		<title>CDNs as Code</title>
 
 		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/white.css">
@@ -96,8 +96,14 @@
 
                     <section>
 - what's a CDN?
+                      <aside class="notes">
+                          someone else is making a lot of copies of your web pages across the world
+                      </aside>
+                    </section>
+                    <section>
 - what's Infrastructure as Code?
                       <aside class="notes">
+                          your servers are in Git
                       </aside>
                     </section>
                 </section>
@@ -131,8 +137,16 @@
                       </aside>
                       
                     </section>
-                    BREAK?
 
+                    <section>
+                        <img src="img/homer-bush.jpg" />
+                      <aside class="notes">
+                      </aside>
+                      
+                    </section>
+
+                </section>
+                <section>
                     <section>
                         <img src="img/fastly_api.png" />
                       <aside class="notes">
@@ -150,237 +164,118 @@
                     </section>
 
                     <section>
-but we use CloudFormation
+                        <img src="img/cloudformation.png" />
                       <aside class="notes">
+but we use CloudFormation
 --- we use Python code to generate CloudFormation templates
 --- so why not start from the same description and generate also Terraform resources?
                       </aside>
                     </section>
-                </section>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-                
-                <section>
-                    <img src="img/alphago.jpg" />
-                    <aside class="notes">
-                        Who is this man?
-                        Lee Sedol, the Go world champion, who has recently lost 4-1 against AlphaGo, a Google Deepmind program built in London.
-                        Go is a very complex game - its board is 19x19 - and has a branching factor much larger than chess. After Deep Blue beat Kasparov 3.5-2.5 at chess in 1997, go became the next challenge for game-playing AIs.
-                        AlphaGo is not a program that could be written by a human and a keyboard; it was built with current state-of-the-art machine learning (and buzzword): deep learning. What does that mean? We have to rewind time a bit to fully understand it.
-                    </aside>
-                </section>
-                <section>
-                    <img src="img/ENIAC.jpg" />
-                    <aside class="notes">
-                        Once upon a time, the Turing machine (and its practical implementation, the computer) was invented.
-                        Computers were as large as rooms with a fraction of the power that your watch has today. But since they were capable of executing arbitrary programs, people started to think about complex tasks...
-                    </aside>
-                </section>
-                <section>
-                    <blockquote style="font-size: smaller">
-                        We propose that a 2 month, 10 man study of artificial intelligence be carried out during the summer of 1956 at Dartmouth College in Hanover, New Hampshire. The study is to proceed on the basis of the conjecture that every aspect of learning or any other feature of intelligence can in principle be so precisely described that a machine can be made to simulate it. An attempt will be made to find how to make machines use language, form abstractions and concepts, solve kinds of problems now reserved for humans, and improve themselves. We think that a significant advance can be made in one or more of these problems if a carefully selected group of scientists work on it together for a summer.
-                    </blockquote>
-                    <p><em>John McCarthy (LISP), Claude Shannon (information theory), Marvin Minsky et al, 1956</em></p>
-                    <aside class="notes">
-                        This was the seminar were the term "Artificial Intelligence" was invented.
-                    </aside>
-                </section>
-                <section>
-                    <h1>The perceptron</h1>
-                    <img src="img/perceptron.png" style="width: 70%" />
-                    <aside class="notes">
-                        One of the advances that came out of those years (1957) was the perceptron. It's inspired by what was known about human neurons at the time: they fire once they reach their activation potential, as non-linear systems.
-                        The perceptron tries to reproduce a function of many variables. The inputs are real numbers, and they are linearly combined with constants called weights, multiplied to each of them. `f` is called activation function and it's the non-linearity, in the case of the perceptron it's a simple step function that is 1 when its input is positive and 0 when its input is negative. Later it was changed to a sigmoid (1 / (1 - e^-t)) because it's differentiable
-                    </aside>
-                </section>
-                <section>
-                    <h1>Training a perceptron</h1>
-                    <table>
-                        <tr>
-                            <th>x<sub>1</sub></th>
-                            <th>x<sub>2</sub></th>
-                            <th>ŷ</th>
-                            <th class="variables">y</th>
-                            <th class="variables">e</th>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>0</td>
-                            <td>0</td>
-                            <td class="variables">-0.1</td>
-                            <td class="variables">0.1</td>
-                        </tr>
-                        <tr>
-                            <td>0</td>
-                            <td>1</td>
-                            <td>0</td>
-                            <td class="variables">0.2</td>
-                            <td class="variables">-0.2</td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>0</td>
-                            <td>0</td>
-                            <td class="variables">1.1</td>
-                            <td class="variables">-1.1</td>
-                        </tr>
-                        <tr>
-                            <td>1</td>
-                            <td>1</td>
-                            <td>1</td>
-                            <td class="variables">0.9</td>
-                            <td class="variables">0.1</td>
-                        </tr>
-                    </table>
-                    <aside class="notes">
-                        To use a perceptron in practice, we need to find what its weigths should be. For this, we use a training set: lots of examples of the function we want to mimic. Given a large enough training set, we hope to learn good values for the weights that will generalize to new inputs not in the training set.
-                        Given some values for the weights, we can calculate for each example an output y which is close (or not) to ŷ, and an error equal to the difference between the two.
-                        This is an AND function: only 1 when both inputs are 1. Not represented here is an x<sub>0</sub> term for each example called bias, which is always 1: it gives a constant term to the linear combination.
-                    </aside>
-                </section>
-                <section>
-                    <h1>Derivatives</h1>
-                    <img src="img/derivative.jpg" />
-                    <aside class="notes">
-                        When we start from a random set of weights, we want to understand how we should modify those weights when we are shown a new example, complete with input and expected output. If what we see here is an error function like (ŷ - y), w<sub>0</sub> will place the output in some place of the curve, usually not when this error is minimum. For example, if AND(1, 1) is 0.4 the error is 0.6. If we compute the derivative of the error function, we find that:
-                        - it's 0 in the minimum
-                        - it's positive if we have offshoot a minimum
-                        - it's negative if we are before a minimum
-                        Therefore the derivative of the error with respect to a weight is an indication of how we should update the weight:
-                        - do nothing if we are in a minimum, anything will worsen the error
-                        - subtract something off the weight if we are to the right of a minimum
-                        - add something to the weight if we are to the left of a minimum
-                        These are all local minima!
-                    </aside>
+                    <section>
+                        Limitations
+                        <ul>
+                            <li></li>
+                        </ul>
+                      <aside class="notes">
+-- limitations
+--- one runs after the other (or concurrently if you hate your life); no dependency resolution across the two (DNS in CloudFormation, Fastly services using them in Terraform)
+--- using Terraform by running an external process rather than some kind of binding, unparseable output
+---- at least input is clear, .tf.json files
+                      </aside>
+                    </section>
                 </section>
 
                 <section>
-                    <h1>Perceptron learning rule</h1>
-                    <pre data-trim>
-                    for each example x:
-                        y = f(w * x) // * is a vector product
-                        e = ŷ - y // + error, - derivative
-                        for each weight i:
-                            w<sub>i</sub> = η * e * x<sub>i</sub> // &#x221d; derivative
-                    </pre>
-                    <aside class="notes">
-                        Suppose we want to learn from one example at a time, showing them in sequence to our perceptron.
-                        We compute the actual value the perceptron is calculating, which will probably be off. Then we calculate the error. A positive error means a shortfall, so a negative derivative.
-                        We update the weight with a term proportional to the derivative, which is just e * x<sub>i</sub> (simplification, learning rules can be more complex depending on the activation step)
-                    </aside>
+                    <section>
+                        single source of truth
+                        <img src="collina.jpg" />
+                      <aside class="notes">
+-- keeping a single source of truth in the form of a Git repository
+--- gets applied to various providers (AWS, Fastly) through various tools (CloudFormation, Terraform)
+--- hopefully fewer tools than providers
+                      </aside>
+                    </section>
+
+                    <section>
+                        testing environments
+                        <img src="massproduction" />
+                      <aside class="notes">
+-- testing environments
+--- exact same code, customize the domain (`end2end--journal.elifesciences.org` or `staging--journal.elifesciences.org`)
+---- points to completely separate resources: servers but also DNS entries or other entities like S3 buckets
+                      </aside>
+                    </section>
+
+                    <section>
+                        process
+                      <aside class="notes">
+--- manual: infrastructure changes can easily delete a production database
+---- start with end2end, re-run automated tests afterwards
+---- apply to staging, do exploratory tests if you need to confirm everything works as expected
+---- apply to prod
+---- user monitoring
+                      </aside>
+                    </section>
+
+                    <section>
+-- wait, logs?
+                      <aside class="notes">
+--- CDN can deliver to various destination: S3, Google Cloud Storage, BigQuery
+--- more infrastructure as code: create the buckets or the BigQuery datasets
+---- thankfully with Terraform there is the Google Cloud provider included
+---- validates this new approach is scalable to even more providers
+--- BigQuery almost real time, buckets every minute or other interval
+                      </aside>
+                    </section>
                 </section>
 
                 <section>
-                    <h1>Linear boundaries</h1>
-                    <img src="img/linear_boundaries.gif" style="width: 80%" />
-                    <aside class="notes">
-                       A single perceptron can only get you so far. XOR is a common example of a function which is not linearly separable and hence cannot be learn by a perceptron. However, if you start connecting perceptrons to each other...
-                    </aside>
-                </section>
+                    <section>
+                        Developer
+                        A redirect?
+                        We can do it with VCL
+                      <aside class="notes">
+- additional part with VCL
+-- introduce Developer
 
-                <section>
-                    <h1>On to networks</h1>
-                    <img src="img/XOR_perceptron_net.png" style="width: 40%" />
-                    <aside class="notes">
-                        ..you can solve much more complex problems. 
-                    </aside>
-                </section>
+                      </aside>
+                    </section>
 
-                <section>
-                    <h1>Networks and backpropagation</h1>
-                    <img src="img/colored_neural_network.svg.png" style="width: 30%" />
-                    <aside class="notes">
-                        Fortunately, we can build an actual neural network by feeding the output of a perceptron as the input of another. These structures are commonly separated into layers (at least in non-recurrent neural network): one input layer, one or many hidden layers, one output layer.
-                        To traing this network we use a generalization of the perceptron learning rule, called backpropagation, in which at each iteration we first update the weights of the output layer, than the ones of the preceding layer, and so on; each layer using the weights of the next layer as input. Theorems say that a network with 1 hidden layer can approximate any real function of real variables, so we stick to 1 hidden layer, why making it more complex?
-                    </aside>
-                </section>
+                    <section>
+                        https://github.com/elifesciences/builder/blob/master/src/buildercore/fastly/vcl/journal-submit.vcl.tpl
+                      <aside class="notes">
+-- templating of custom language and its integration with Terraform
+                      </aside>
+                    </section>
 
-                <section>
-                    <blockquote>In from three to eight years we will have a machine with the general intelligence of an average human being. -- Marvin Minsky<span class="fragment">, <em>1970</em></span></blockquote>
-                    <aside class="notes">
-                        At some points the predictions got really optimistic.
-                    </aside>
-                </section>
+                    <section>
+                        <img src="img/commits.png" />
+                      <aside class="notes">
+-- Developer contributing to the Infrastructure as Code layer
+ `git log | grep -o "Author: [^ ]*" | sort | uniq -c | sort -rn`
+                        2283
+                        728
+                        89
+                        8
+                        7
+                        7
+                        4
+                        4
+                        3
+                        2
+                        2
+                        1
+                        1
+                        1
+                      </aside>
+                    </section>
 
-                <section>
-                    <img src="img/hype.png" />
-                    <aside class="notes">
-                        Throughout the 90s, neural network interests (conference attendance, number of papers, investment) declined as other methods gave more accurate results on standard problems. Support vector machines were considered state of the art until 2010.
-                        The Hype Cycle is a classic model showing how a technology can go through a peak of inflated expectation to crash and burn later. It takes much time for enlightement to arrive and to get to a trustable, productive usage of the technology in question. Unless we are in a new peak of expectations...
-                    </aside>
-                </section>
-
-                <section>
-                    <h1>Deep neural networks</h1>
-                    <img src="img/cnn.jpg" />
-                    <aside class="notes">
-                       Here we see a convolutional neural network for the recognition of hand-written digits, one of the standard problems against which new approaches and models are measured. The pixels of a 32x32 image of the digit have a luminance value from 0 to 1. They are connected to the input layer, which is not fully-connected but is a convolution, a mathematical operation that makes each neuron of the next layer the combination of a (5x5) square pixel around its position.
-                       The next layer is a subsampling layer, which divides the previous layer in 2x2 squares and takes the maximum (or another function) in the set of the convolutional neuron values. More layers are added on top... until we get to the output layer, consisting of 10 neurons corresponding to the different classes, the 10 digits from 0 to 9. The maximum value wins as the input image is classified into that set.
-                    </aside>
-                </section>
-
-                <section>
-                    <h1>A lot to learn</h1>
-                    <ul>
-                        <li>possibly millions of weights</li>
-                        <li>feature extraction: which and how many layers work best for this problem?</li>
-                        <!--<li>vanishing gradients slow down training of layers far from the outputs</li>-->
-                        <li>does the brain really work like that?</li>
-                    </ul>
-                    <aside class="notes">
-                        Some of the problems can be solved by sheer computational brute force: learning the weights of such a complex network with enough GPU in your datacenter or private cloud. Other need more theory, literature and experimentation: the convolutional and subsampling layers have been proven to work in the field of image recognition, but every domain can be different.
-                    </aside>
-                </section>
-
-                <section>
-                    <h1>AlphaGo: supervised</h1>
-                    <blockquote><strong>On training set:</strong> This data set contains 29.4 million positions from 160,000 games played by KGS 6 to 9 dan human players</blockquote>
-                    <blockquote><strong>On training time and resources: </strong>The value network was trained for 50 million mini-batches of 32 positions, using 50 GPUs, for one week.</blockquote>
-                    <aside class="notes">
-                        These are the figures when it comes to brute force. You need a lot of training data *and* of computing resources. That puts companies like Google and Facebook in an optimal position to fund this research and to use its results, which is why many of the deep learning gurus like Yann LeCun and Geoffrey Hinton now work there.
-                    </aside>
-                </section>
-
-                <section>
-                    <h1>Alpha(Go) Zero: reinforcement</h1>
-                    <img src="img/alphagozero.jpg" />
-                    <aside class="notes">
-                        AlphaGo Zero is a recent evolution of AlphaGo that does not use training data. It plays against itself to improve its performance. It's more of an algorithmic breakthrough that brute force search: when evolved (into Alpha Zero) to play chess rather than Go, it searches thousands rather than millions of position per seconds, still outplaying its adversaries.
-                        The trick of reinforcement learning (and adversarial learning) is that the data needed for training can be generated from clear cut rules (like the rules of a board game). It remains to be seen how this approach can be extended to other domains, for example by distinguishing between generating and discriminator networks (where the first attempts to fool the second).
-                    </aside>
-                </section>
-
-                <section>
-                    <h1>My conclusions</h1>
-                    <ul>
-                        <li>There is both hype and beauty</li>
-                        <li>Big hardware and, unless it's a game, big data</li>
-                        <li>We weren't able to do OCR or speech recognition, now they're normal</li>
-                    </ul>
-                </section>
-                <section>
-                    <h1>References</h1>
-                    <ul>
-                        <li><a href="https://en.wikipedia.org/wiki/Dartmouth_Conferences">Dartmouth conference</a></li>
-                        <li><a href="https://en.wikipedia.org/wiki/Perceptron">Perceptron</a></li>
-                        <li><a href="http://neuralnetworksanddeeplearning.com/chap2.html">Training with backpropagation</a></li>
-                        <li><a href="http://arxiv.org/abs/1404.7828">Schmidhuber's review paper on neural networks</a></li>
-                        <li><a href="https://gogameguru.com/i/2016/03/deepmind-mastering-go.pdf">The AlphaGo paper</a></li>
-                        <li><a href="https://deepmind.com/blog/alphago-zero-learning-scratch/">AlphaGo Zero</a></li>
-                        <li><a href="https://blog.acolyer.org/tag/machine-learning/">Adrian Colyer's cliff notes on the latest papers in machine learning</a></li>
-                    </ul>
+                    <section>
+                      <aside class="notes">
+                          platform, not integration
+                      </aside>
+                    </section>
                 </section>
 
                 <section>
