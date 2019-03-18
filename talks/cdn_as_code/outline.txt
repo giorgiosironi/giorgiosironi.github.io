@@ -19,6 +19,7 @@
 --- but we use CloudFormation
 --- we use Python code to generate CloudFormation templates
 --- so why not start from the same description and generate also Terraform resources?
+
 -- limitations
 --- one runs after the other (or concurrently if you hate your life); no dependency resolution across the two (DNS in CloudFormation, Fastly services using them in Terraform)
 --- using Terraform by running an external process rather than some kind of binding, unparseable output
