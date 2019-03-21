@@ -73,67 +73,87 @@
 
                 <section>
                     <section>
-                        2017
+                        <h2>2017</h2>
                         <img src="img/despacito.jpg" />
                       <aside class="notes">
+                          This story starts a while ago, in 2017. Microservices are still a new kid on the block, and everyone is debating whether a monolith or Python applications containing 100 lines of code... are the solution to all problems.
+                          One Bitcoin is worth $20,000 at some point. And the "fifth best Latin song of all-time" is released and immediately and tops the charts.
                       </aside>
                     </section>
                         
                     <section>
                         <img src="img/homepage.png" />
                       <aside class="notes">
-    -- scientific journal
-    -- new website just launched
+                          Meanwhile, our scientific journal has just launched a major redesign accompanied by a major rearchitecture: from a Drupal monolith to microservices separated from a custom front end. Unlikely for 2017, the site works even without JavaScript (save the carousel).
+                          This article cover from a recent homepage is one of the attempts to make scientific research more accessible to laypeople (like me). The main trend to reverse however is the tendency for scientists to not trust websites and download PDF versions of articles, which ignores the power of the web as an interactive medium.
                       </aside>
                     </section>
 
                     <section>
                         <img src="img/aws.png" />
                       <aside class="notes">
-    -- host of AWS technologies and lock in, CloudFront as a CDN, CloudFormation for managing everything declaratively
+                          Looking under the hood, this is all inextricably tied to AWS: S3 buckets abound for storing images and other assets. All microservices run on EC2 instances. Data is stored in Postgres running on RDS. And we even serve the users with Amazon's own Content Delivery Network, CloudFront. All of these services are created via Infrastructure as Code, so besides the complexity you can check what is running in a service and with what settings.
                       </aside>
                     </section>
 
                     <section>
-- what's a CDN?
+                      <img src="img/fastly-map.jpg" />
                       <aside class="notes">
-                          someone else is making a lot of copies of your web pages across the world
+                          Now what's a CDN? In a modern world, a CDN overlaps very much with the regions that a cloud provider will work in. However you don't have much control of the specialized servers, but you buy a particular service.
+                          The service consists of the CDN making a lot of cached copies of your web pages, assets and images across the world. Whether it is a main.js or main.css file, or a huge video, a copy of it can be propagated across all these different servers. This can be done preemptively, or more commonly on the first time a file is requested from each location.
+                          This model starts very simple, but it gets complicated as the CDN starts to acquire logic (add, modify and remove HTTP headers) that can be executed closer to the user for better performance.
                       </aside>
                     </section>
+
                     <section>
-- what's Infrastructure as Code?
+                      <img src="img/iac.png" style="width: 50%;" />
                       <aside class="notes">
-                          your servers are in Git
+                          What's Infrastructure As Code instead?
+                          Mostly for web applications it means: your servers are in Git. Meaning you don't create servers by hand, but there is some source code that will be applied by you or the cloud provider to create them and get your applications running.
+                          I always start from speaking of servers, but of course these expands to all of the cloud bells-and-whistles: managed queues, databases, object storage for files, caches, even the DNS entries. They all need to know how they should be named, how much memory your Postgres and Redis may consume, and all sorts of tuned parameters that can save you money or allow that large query to run without waking you up.
                       </aside>
                     </section>
                 </section>
 
                 <section>
                     <section>
-                        Boss emoji
+                        <img src="img/boss.jpg" style="width: 40%; float: left;" />
+                        <div style="height: 90%; vertical-align: center">
+                        <p class="fragment">We're gonna use a CDN...</p>
+                        <p class="fragment">To help people get to the content...</p>
+                        <p class="fragment">It's Fastly!</p>
+                        <p class="fragment">It's fast!</p>
+                        </div>
                       <aside class="notes">
+                          In this context, the head of technology comes into the office one morning...
+                          Part of our mission is to help scientist. And scientist waste a lot of time in their day jumping through paywalls, downloading papers, looking for data about an experiment, comparing figures... Their life is made up of many activities that a journal can really make an impact on.
+                          A scientist may check out hundreds of papers in a day when they are reviewing the literature. If you can load an article and its images in 2 seconds rather than 10 it's a sizable help over time.
+                          Fastly seems to be the CDN of choice. We had been using CloudFront until that time, which has a slightly worse geographical reach.
                       </aside>
                     </section>
 
                     <section>
                         <img src="img/fastly.png" />
                       <aside class="notes">
---- so cool, and it takes minutes to change its configuration rather than >1 hour with CloudFront
+                          To be fair to Fastly, it feels like a premium CDN: costs more and you get more in terms of performance. This is not just user-related: a configuration change commonly took 1 hour to propagate on CloudFront, whereas it took 1-2 minutes on Fastly. It really opens the door for a better feedback loop...
+                          Airbnb, Spotify use Fastly (not necessarily exclusively). In fact, music streaming was the domain where Boss used it extensively.
+                          So far so good - new random technology to integrate into our builds and delivery pipelines. How do we create a CDN?
                       </aside>
                     </section>
 
                     <section>
                         <img src="img/fastly_panel.png" />
                       <aside class="notes">
--- point and click in a panel
+                          Your first CDN will almost always be created in this way. You open a website, where there is an administration panel, and you create a service pointing to an existing origin. (Origin is how we call what's behind the CDN, your own application usually but may also be a cloud provider's bucket)
+                          But this doesn't scale to production (and testing) CDNs for many applications...
                       </aside>
                     </section>
 
                     <section>
                         <img src="img/point-and-click.jpg" />
                       <aside class="notes">
---- horrible and unreproducible
---- especially reproducibility for testing
+                          I'm not impressed by panels as they are horrible for reproducibility. Part of building a delivery pipeline is being able to provide testing environments that are as close to production, technology-wise, as possible. You don't need to run the same number of servers (2 is probably fine to substitute for N). But if you are doing anything more than a transparent caching layer, you need to get that CDN into your integration testing environments, whether it's `staging` for humans or a more automated environment (we call it `end2end`).
+                          If you create any resource through a UI, it will be difficult to perfectly reproduce it by making the exact same clicks every time you want a fresh testing environment. Existing environments will drift a bit and new ones will drift even more as knowledge about the creation procedure is lost.
                       </aside>
                       
                     </section>
@@ -141,6 +161,7 @@
                     <section>
                         <img src="img/homer-bush.jpg" />
                       <aside class="notes">
+                          I had just finished the successful Continuous Delivery of a complex AWS environment! At this point, I look at the new plans and vanish for the day, forgetting the idea. But there's no escape: we are going to do this. I guess software is never finished.
                       </aside>
                       
                     </section>
@@ -150,130 +171,172 @@
                     <section>
                         <img src="img/fastly_api.png" />
                       <aside class="notes">
--- check out Fastly APIs
---- LOTS of work to create everything there, and to maintain it and do a diff and delete it
---- sounds like a common problem
+                          So how do we go about integrating this into our Infrastructure as Code effort? At the start I have no idea.
+                          I go to the Fastly website and I find out they have an API. Good, the thing is scriptable in the end.
+                          But the API has *loads* of resources: not just the service but so many sub entities and all the possible configurations. Origins, headers, rules...
+                          Consider the lifecycle of a cloud resource like a database, or a CDN in this case: it has to be created, but also updates need to be applied from time to time to change its configuration. At a certain point, it likely will need to be retired as it's not used anymore and you want to stop paying for it. Or in general you want to create a new resource in its place so you destroy one and migrate to another.
+                          An API is inherently programmatic, as opposed to declarative: given a state you want to reach, you have to figure out which calls to make and in what order. For the Fastly API and all its complexity, this seems to be a common problem to solve.
                       </aside>
                     </section>
 
                     <section>
                         <img src="img/terraform.png" />
                       <aside class="notes">
--- Terraform provider
+                          Here comes Terraform. It has surged in the last years as a cloud-agnostic tool that allows you to declare resources, calculate a diff against the real state of infrastructure, and apply it to bring.
+                          If you compare it to CloudFormation, it started out as less mature but really shows the flexibility of its workflow: you first generate a *plan* that describes what the diff will create, update and destroy. Dependencies are calculated so that A is created before B if B needs A, but you can influence that process with some attributes like `create_before_destroy`. You can even *import* infrastructure that was not originally created by Terraform, slowly bringing under Infrastructure As Code the cowboy coding of the consultant that first created an application.
+                          There's always a consultant that opens the AWS console, randomly creates things and hands you an application whose dependencies no one knows.
                       </aside>
                     </section>
 
                     <section>
                         <img src="img/cloudformation.png" />
                       <aside class="notes">
-but we use CloudFormation
---- we use Python code to generate CloudFormation templates
---- so why not start from the same description and generate also Terraform resources?
+                          However, all our efforts were focused on CloudFormation: an AWS-specific tool, less flexible as it *needs* to create all the resources it manages. Still much better than calling the AWS APIs, as it's declarative. The documentation goes to great length to describe what causes the destruction and recreation of a server with respect to its update in place, but the only real way to know if something works is to try it (this is true for Terraform, to a ceratin extent).
+                          We didn't use CloudFormation directly: we generate the templates (it's a big JSON or XML document) using Python code and the `troposphere` library. The input is an higher-order representation so that we get some consistency across templates e.g. all tags are generated using the project and environment names.
+                          So what do we do now that we need to create something that is not an AWS resource? When this was started Terraform barely existed. 
+                          The solution was: generate templates for both: CloudFormation JSON templates and a folder of Terraform *.tf files complete of the necessary provider. Then create a *stack* not just as a CloudFormation stack but also as a Terraform isolated state.
                       </aside>
                     </section>
 
                     <section>
-                        Limitations
+                        <h2>Limitations</h2>
                         <ul>
-                            <li></li>
+                            <li class="fragment">No dependency across the two</li>
+                            <li class="fragment">Terraform is an external process</li>
                         </ul>
                       <aside class="notes">
--- limitations
---- one runs after the other (or concurrently if you hate your life); no dependency resolution across the two (DNS in CloudFormation, Fastly services using them in Terraform)
---- using Terraform by running an external process rather than some kind of binding, unparseable output
----- at least input is clear, .tf.json files
+                          There are a couple of limitations to this approach, which was context-specific. Greenfield I would just have started with a single tool.
+                          First, one runs separately after the other (or you can run them concurrently if you hate your life); so there can be no dependency resolution across the two. We create a DNS entry in CloudFormation that points to something that is not ready to receive requests. Then we create the corresponding Fastly service with Terraform. But if the Fastly service had a dynamic hostname (like it happens for Elastic Load Balancers), we would fall into a chicken-and-egg problem where there is a mutual dependency.
+                          Second, while AWS has a stable Python SDK (Boto) that allows access its APIs including CloudFormation, Terraform is run just as an external process. At the time, I found a minimal wrapper helping to craft the right command line to execute, but the interaction is little more than what a bash script could do. You really have to prepare everything before hand in terms of .tf files and then run it and let the user interact with it directly.
+                          However, this works: in days we had a prototype of a server (Amazon EC2, hence CloudFormation), used as the origin of a Fastly CDN (Terraform), which has a CNAME entry (on our Amazon Route53, hence CloudFormation).
                       </aside>
                     </section>
                 </section>
 
                 <section>
                     <section>
-                        single source of truth
-                        <img src="collina.jpg" />
+                        <h2>Single source of truth</h2>
+                        <img src="img/collina.jpg" />
                       <aside class="notes">
--- keeping a single source of truth in the form of a Git repository
---- gets applied to various providers (AWS, Fastly) through various tools (CloudFormation, Terraform)
---- hopefully fewer tools than providers
+                          Why do we care about this? The most important reason is to be able to have a single point of entry that is the source of truth for all the infrastructure being used by our technical team. That source of truth gets applied to various providers (AWS, Fastly, later on Google) through various tools (CloudFormation, Terraform). Hopefully there are fewer tools than providers.
+                          In terms of onboarding, Infrastructure As Code is great as it can show people what is there and why. You can open a pull request to request a change rather than opening a Jira ticket to someone. The change itself can be tuned and can be reviewed by various visible; it can be linked to and will remain in the history of the Git repository. And that's just the start...
                       </aside>
                     </section>
 
                     <section>
-                        testing environments
-                        <img src="massproduction" />
+                        <h2>Testing environments</h2>
+                        <img src="img/mass-production.jpg" />
                       <aside class="notes">
--- testing environments
---- exact same code, customize the domain (`end2end--journal.elifesciences.org` or `staging--journal.elifesciences.org`)
----- points to completely separate resources: servers but also DNS entries or other entities like S3 buckets
+                        Once you have a declarative description of an environment, you can parameterize it to create testing environments that stay in sync with the production one.
+                        In the case of a CDN, you will have the exact same configuration, but customize the domain (`end2end--journal.elifesciences.org` or `staging--journal.elifesciences.org`) and the origin possible.
                       </aside>
                     </section>
 
                     <section>
-                        process
+                      <img src="img/test-journal.png" />
                       <aside class="notes">
---- manual: infrastructure changes can easily delete a production database
----- start with end2end, re-run automated tests afterwards
----- apply to staging, do exploratory tests if you need to confirm everything works as expected
----- apply to prod
----- user monitoring
+                        The testing environments becomes the place where you can apply your changes before putting them live.
+                        This can be used to explore what a change does: infrastructure changes can easily delete a production database if you are not careful about what is being changed. If something goes really wrong, just delete the environment and recreate it as no data will be lost.
+                        It can also work with automated testing: change the infrastructure in your end2end environments, then re-run automated tests afterwards to confirm nothing (of what is covered) is broken.
+                        It can work with manual, exploratory testing: change the infrastructure in your staging environment, then exercise the application trying to break it in various scenarios.
+                        After all of this works as expected, you can apply your changes to the production environment and you run no risk of accidentally doing something different there: the environments stay consistent without much need for strong discipline.
                       </aside>
                     </section>
 
+                    <!--
+ wait, logs?
                     <section>
--- wait, logs?
-                      <aside class="notes">
---- CDN can deliver to various destination: S3, Google Cloud Storage, BigQuery
---- more infrastructure as code: create the buckets or the BigQuery datasets
----- thankfully with Terraform there is the Google Cloud provider included
----- validates this new approach is scalable to even more providers
---- BigQuery almost real time, buckets every minute or other interval
+ CDN can deliver to various destination: S3, Google Cloud Storage, BigQuery
+ more infrastructure as code: create the buckets or the BigQuery datasets
+- thankfully with Terraform there is the Google Cloud provider included
+- validates this new approach is scalable to even more providers
+ BigQuery almost real time, buckets every minute or other interval
                       </aside>
                     </section>
+                    -->
                 </section>
 
                 <section>
                     <section>
-                        Developer
-                        A redirect?
-                        We can do it with VCL
+                        <img src="img/developer.jpg" style="width: 40%; float: left;" />
+                        <div style="height: 90%; vertical-align: center">
+                        <p class="fragment">There's a redirect to implement...</p>
+                        <p class="fragment">We could do it in Fastly</p>
+                        <p class="fragment">With VCL!</p>
+                        <p class="fragment">That obscure language Fastly forked from Varnish and that you can't run locally!</p>
+                        </div>
                       <aside class="notes">
-- additional part with VCL
--- introduce Developer
-
+                        And when everything seems covered, comes a new challenge.
+                        There are special features that sometimes you can cover with "configuration" rather than adding more and more logic and if()s to your application. Furthermore, implementing something at the CDN level means it's executed closer to the user, so very small requests are answered by the closest Point Of Presence in 100ms rather than crossing a couple oceans to reach our servers in the US, which brings them more towards the 1000ms side.
+                        So fair enough, it makes sense for a couple of reasons to put long-standing redirects (and more features) in the CDN. How do we do it?
+                        Remember VCL? Me neither. Varnish Configuration Language - Varnish used to be the topic of so many conference talks. Fastly have their own Varnish, closed source and forked from Varnish 2 or something. And you can put it snippets of this code in predetermined points; essentially, all the features that Fastly offers compile to a slightly different VCL code for that service. It's the assemble of (this) CDN, and it offers you the capability of putting some assembly snippets inside your high-level code.
+                        This feels like stored procedures because it *is* stored procedures: just in a CDN rather than in a RDBMS, two fewer letters. They are both stateful since you may cache things forever in a CDN; you can really screw up the cache with incorrect code and then have to purge everything and start from zero.
                       </aside>
                     </section>
 
                     <section>
-                        https://github.com/elifesciences/builder/blob/master/src/buildercore/fastly/vcl/journal-submit.vcl.tpl
+					    <pre><code style="font-size: 90%;" data-trim data-lang="php">
+if (req.url.path == "/submit") {
+    if (req.http.Referer ~ "${referer}") {
+        return(pass);
+    }
+
+    if (randomint(1, 100) &lt;= ${percentage}) {
+      set req.http.X-eLife-Redirect = "${xpub_uri}";
+    } else {
+      set req.http.X-eLife-Redirect = "https://elifesciences.org/...";
+    }
+    error 302;
+}
+                        </code></pre>
+                        <a href="https://github.com/elifesciences/builder/blob/master/src/buildercore/fastly/vcl/journal-submit.vcl.tpl">source</a>
                       <aside class="notes">
--- templating of custom language and its integration with Terraform
+						Here's an example of how VCL looks like. What this does isn't important - it performs A/B testing via a redirect that happens on certain random conditions. What matters is how this gets stored and applied to a real CDN.
+						Terraform has a concept of `data sources` that can provide configuration values for any resource that it is creating. One of these data srources is the `template file`, so each of these snippets can be an independent file that is linked by the Terraform resources.
+						You can see from the presence of variables like `referer`, `percentage`, and `xpub_uri`: these templates may not be just static files but can be interpolated with variables that come from other data sources. This is very flexible: we have some VCL related to error pages that fills in the HTML body of the error response with an HTML retrieved from a canonical URL (yet another kind of data source).
+                      </aside>
+                    </section>
+
+                    <section>
+						<ul>
+							<li>0.1.0 (June 20, 2017) Same functionality as that of Terraform 0.9.8. Repacked as part of Provider Splitout</li>
+							<li>0.3.0 (August 02, 2018) Add support for BigQuery logging</li>
+
+							<li>0.4.0 (October 02, 2018): Add support for regular VCL Snippets</li>
+						</ul>
+						<p>From the <a href="https://github.com/terraform-providers/terraform-provider-fastly/blob/master/CHANGELOG.md">CHANGELOG</a> of the Fastly provider</p>
+
+                      <aside class="notes">
+                          Not so fast: here's how Terraform works. Each different service is accessed through a provider, a binary (usually written in Go) that interfaces with Terraform to perform calls to the API. The quality of providers and how much they implement may vary. The Fastly provider in fact, hadn't implemented yet a couple of features provided by Fastly including VCL snippets (and BigQuery logging).
+                          In particular there are two levels of abstraction at play, the Fastly Go SDK and on top of that the Terraform Fastly provider that uses it as a library.
+                          We worked around the lack of VCL Snippets with a different more basic features, VCL Templates (TODO) where you don't just provide the snippets but also paste into your project a ~150-line VCL `main` file and insert `include` statements in the right place to tie all the snippets together yourself. To this day, we stuck with that feature and didn't make use of the snippets.
+                          We were less lucky with logs: since BigQuery support was not implemented, we delivered to Google Cloud Storage which is on the same cloud provider at least. However we had to run a background job to index that content into BigQuery, which became costly over time and was also removing the possibility to see logs in real time (running it every hour or so). When a newer version of the Terraform Fastly provider came out we switched quickly and removed the duct tape solution.
                       </aside>
                     </section>
 
                     <section>
                         <img src="img/commits.png" />
                       <aside class="notes">
--- Developer contributing to the Infrastructure as Code layer
+<pre>
+Developers contributing to the Infrastructure as Code layer, by commits
  `git log | grep -o "Author: [^ ]*" | sort | uniq -c | sort -rn`
-                        2283
-                        728
-                        89
-                        8
-                        7
-                        7
-                        4
-                        4
-                        3
-                        2
-                        2
-                        1
-                        1
-                        1
-                      </aside>
-                    </section>
-
-                    <section>
-                      <aside class="notes">
-                          platform, not integration
+2283
+728
+89
+8
+7
+7
+4
+4
+3
+2
+2
+1
+1
+1
+</pre>
+                          The take away from this however is: embrace these changes and strange new features and bring them into your platform. So that the platform becomes what AWS normally is: a tool to allow them to go faster rather than a compliance problem to adhere to because it has to be used.
+                          This is the distribution of commits per developer to the Infrastructure as Code repository. The first two people are me and another colleague who work on infrastructure as one of the primary responsibilities. But all the rest show the openness to contribution: not just much to Python code (which may be complex to write and require knowledge of legacy infrastructure) but to configuration changes that should be available to everyone. My efforts will never be enough in trying to involve people so that they feel empowered to make changes by themselves. Even if they can't take them to production, a pull request is much better than a "Hello Giorgio," Jira ticket.
                       </aside>
                     </section>
                 </section>
