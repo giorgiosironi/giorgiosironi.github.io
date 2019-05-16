@@ -34,7 +34,7 @@
 		<div class="reveal">
 			<div class="slides">
 				<section>
-                    <h1>CDN as Code</h1>
+                    <h1> From VM to Docker-on-VM</h1>
                     <h3>Giorgio Sironi - SETI@eLife</h3>
                     <a href="https://elifesciences.org"><img src="img/logo.png" style="width: 20%;" /></a>
                     <h6>(if you're reading this on your laptop, press S for notes)</h6>
@@ -104,7 +104,12 @@
                     </section>
 
                     <section>
-                        <img src="img/what-if-i-told-you-there-are-too-many-naval-metaphors-in-this-talk.jpg" />
+                        <img src="img/ryanair.jpg" />
+                        <p class="fragment"><em>Ryanair only use Boeing 737-800 aircraft. This <a href="https://www.ryanair.com/us/en/useful-info/about-ryanair/fleet#!">streamlined fleet</a> helps us to keep costs down and safety standards up.</em></p>
+                    </section>
+
+                    <section>
+                        <img src="img/what-if-i-told-you-there-are-too-many-naval-metaphors-in-this-talk.jpg" style="width: 60%" />
                         <aside class="notes">
                             You can see where this is going...
                         </aside>
@@ -122,8 +127,9 @@
 
                     <section>
                         <h2>Problem: cost</h2>
+                        <img class="fragment" src="img/when-snapping-my-fingers-ill-retire-half-of-the-servers.jpg" />
                         <aside class="notes">
-                            Besides the duplication of work across all of these servers, there is an operating cost problem, mostly related to the CPU and memory time they are using. You may have a service sitting at low utilization for weeks, but still running on a single VM per environment that can't be made arbitrarily small. There is the overhead of running the OS for example, plus changing the size of the instances is not something that can be done very easily: it requires an infrastructure intervention, usually a change of templates followed by reboot. Not something you'd automate, in fact people rather set up autoscaling relying on many smaller instances rather than customizing a few fixed ones.
+                            Besides the duplication of work across all of these servers, there is an operating cost problem, mostly related to the CPU and memory time they are using. You may have a service sitting at low utilization for weeks, but still running on a single VM per environment that can't be made arbitrarily small. There is the overhead of running the OS for example, plus changing the size of the instances is not something that can be done very easily: it requires an infrastructure intervention, usually a change of templates followed by reboot. Not something you'd automate, in fact people set up autoscaling relying on many smaller instances rather than customizing a few fixed ones.
                         </aside>
                     </section>
 
@@ -158,6 +164,9 @@
 
                     <section>
                         <h2>Solution: Container images</h2>
+                        <a href="https://commons.wikimedia.org/wiki/Category:Cookie_cutters#/media/File:Emporte_piece_bonhomme.jpg">
+                        <img src="img/cookie_cutter.jpg" style="width: 60%" />
+                        </a>
                         <aside class="notes">
                             Container images are designed (intentionally or not) to be the perfect solution to this problem.
                             Not only they are immutable, but in the Docker incarnation they have a caching system that helps rebuilding only the layers that have actually changed (though invalidation of this is not perfect as base images change all the time).
@@ -215,15 +224,26 @@
 
                     <section>
                         <h2>Disk space</h2>
+                        <pre><code>$ sudo du -m --max-depth=1 /ext/docker/overlay2 | sort -rn | head -n 5
+1295    /ext/docker/overlay2
+268     /ext/docker/overlay2/9d31eb16...
+94      /ext/docker/overlay2/ce9a3990...
+94      /ext/docker/overlay2/b159be35...
+94      /ext/docker/overlay2/930dba91...
+</code></pre>
                         <aside class="notes">
+                            Docker images are made of layers and usually stored on disk with the overlay drivers. The physical details of the layers are combined into a running containers are beyond this talk. What is interesting is to see how layers de-duplicate part of the Docker images, saving on disk space. Despite that, constantly deploying new images to a node will accumulate layers that will never be cleaned up.
+                            For this reason, `docker prune` and its various subcommands like `docker image prune` can help removing files. However the filters that are available are a pain point however, as for example they are based on the image creation date rather than on when it has been downloaded or last used.
+                            Since this deployment solution doesn't rely on anonymous nodes but rather on application-specific ones, they will typically be long-lived and exacerbating the problem. I don't have off-the-shelf solution, but watch out for disks that are filling one deployment at a time.
                         </aside>
                     </section>
 
                     <section>
                         <h2>Push the image</h2>
-                        <code>docker login</code>
-                        <code>docker tag</code>
-                        <code>docker[-compose] push</code>
+                        <pre><code>docker login
+docker tag
+docker[-compose] push
+</code></pre>
                         <aside class="notes">
                             Once tests are running reliably, to allow the image to be reused across environments it's necessary to push it to a registry. Even if Docker Hub is configured as a default registry, it will still need credentials for your user or organization to allow new images to be pushed to it.
                             You might as well set up an alternate registry like AWS Elastic Container Registry, however I haven't found a significant difference in performance for our use case; that would really be the selling point. Also, you would need to set it up on nodes that only pull images.
@@ -267,11 +287,21 @@
 
                     <section>
                         <h2>Realize this was just the start</h2>
-                        <img src="img/kubernetes.svg" />
+                        <img src="img/kubernetes.png" style="width: 50%; height: 50%" />
                         <aside class="notes">
-                            https://twitter.com/kelseyhightower/status/1125440400355782657
                         </aside>
                     </section>
+
+                    <section>
+                        <h2>Realize this was just the start</h2>
+                        <div style="width: 40%; margin: auto auto;">
+                            <blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">In essence, Kubernetes is the sum of all the bash scripts and best practices that most system administrators would cobble together over time, presented as a single system behind a declarative set of APIs.</p>&mdash; Kelsey Hightower (@kelseyhightower) <a href="https://twitter.com/kelseyhightower/status/1125440400355782657?ref_src=twsrc%5Etfw">May 6, 2019</a></blockquote>
+                            <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                        </div>
+                        <aside class="notes">
+                        </aside>
+                    </section>
+
                 </section>
 
                 <!--
