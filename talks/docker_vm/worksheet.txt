@@ -1,0 +1,32 @@
+https://speakerdeck.com/virtualgill/planning-a-technical-talk?slide=2
+
+Purpose 
+Why am I telling this story? To show people a path to migrate away from VMs towards containers, without jumping from a cliff into the unknown
+What do I want people to have learnt? How to make an incremental migration to containers without sacrificing safety
+
+Story
+start: we are running every microservice on a single T2 instance, $10-20/month, times the number of environments; lots of software installed that can break/needs maintenance
+end: we now build on anonymous VMs (`containers` Jenkins nodes) and deploy to thin VMs just containing Docker and files
+steps:
+- start building Docker images locally
+- start building them in CI
+- run the project tests in CI within the image
+- deploy the image to the VM for an environment
+- start transitioning traffic/workloads from the installed-on-VM to the running-container-on-VM
+- realize the journey is just the start: Kubernetes will require to port common infrastructure inside the orchestrator e.g. logging
+
+Audience
+- generic full stack developers, perhaps frontend perhaps backend
+-- DevOps people
+
+Assumptions
+- know how to build a Docker image
+- have used docker-compose locally
+- have seen production break during migrations
+
+Characters
+- SETI: me. Started from coding features but now builds testing environments via Infrastructure as Code.
+
+Scene settings
+- we are a scientific journal, digital only so the website (largest audience) is powered by a fleet of microservices giving out data to build pages
+- we don't have a cost problem yet, but as more services are added the cost goes up - doesn't scale

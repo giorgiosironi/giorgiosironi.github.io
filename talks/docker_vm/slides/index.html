@@ -1,0 +1,321 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>From VM to Docker-on-VM</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/white.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+        <style type="text/css">
+        .variables {
+            background-color: #cc6666;
+        }
+        img {
+            border: none !important;
+        }
+        </style>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+                    <h1>CDN as Code</h1>
+                    <h3>Giorgio Sironi - SETI@eLife</h3>
+                    <a href="https://elifesciences.org"><img src="img/logo.png" style="width: 20%;" /></a>
+                    <h6>(if you're reading this on your laptop, press S for notes)</h6>
+                    <aside class="notes">
+
+                    </aside>
+                </section>
+
+                <section>
+                  <p>Giorgio Sironi (<a href="https://twitter.com/giorgiosironi">@giorgiosironi</a>)</p>
+                  <div style="float: right; width: 20%" />
+                      <a href="https://twitter.com/giorgiosironi"><img src="img/elife_squared.jpg" style="float: right; width: 100%;" /></a>
+                      <a href="https://elifesciences.org"><img src="img/elife-logo.jpg" style="float: right; width: 100%" alt="I work for eLife Sciences" /></a>
+                      <div style="float: right; width: 100%" />
+                          <img src="img/it.png" style="width: 45%" alt="Italy" />
+                          <img src="img/eu.jpg" style="width: 45%" alt="European Union" />
+                      </div>
+                  </div>
+                  <div style="float: left; width: 80%; margin-top: 5%"> 
+                      <ul class="build">
+                        <li>Software Engineer in Tools and Infrastructure</li>
+                        <li>What do I do
+                            <ul>
+                            <li>Distributed systems</li>
+                            <li>Automated complex tests, integrating many different projects</li>
+                            <li>Continuous Delivery</li>
+                            <li>Pasta and risotto</li>
+                            </ul>
+                        </li>
+                      </ul>
+                  </div>
+                  <aside class="notes">
+                      I am a SETI, working on build/tooling/deployment problems. As such, I put together projects inside distributed systems, help test their integration and other non-functional requirements; with the goal of deploying new versions every hour without breaking.
+                  </aside>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>The EC2 fleet</h2>
+                        <a href="https://www.telegraph.co.uk/news/uknews/the_queens_diamond_jubilee/9305678/Diamond-Jubilee-The-Queen-no-longer-rules-the-waves.html" ><img src="img/fleet.jpg" /></a>
+                        <aside class="notes">
+                        I work in a scientific journal, where to produce a single page 5-6 different services may be involved in fetching the right data and translating to a viewable HTML form.
+                        The default deployment model, from 2014 onwards, was to take a virtual machine and check out the source code there. We are talking about dynamic languages so not many steps required apart from installing libraries and running the service.
+                        However, this quickly grew into a fleet of EC2 instances, each customized for a single service, sometimes replicated for redundancy, and usually deployed to multiple environments like `ci`, `staging` and `prod`.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Problem: maintenance</h2>
+                        <a href="https://commons.wikimedia.org/wiki/File:Aircraft_Maintenance,_AMN,_Teuge_Airport.jpg"><img src="img/maintenance.jpg" /></a>
+                        <aside class="notes">
+                            With lots of servers (or ships or planes), maintenance can become a burden.
+                            Puppet, Chef, Salt or else will be running every day or every hour. And they will experience all sorts of failures...
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Problem: maintenance</h2>
+                        <ul>
+                            <li>an APT key has expired</li>
+                            <li><code>mysql-5.7.23</code> has been removed from repositories</li>
+                            <li><code>bitbucket.com</code> doesn't answer or times out</li>
+                        </ul>
+                        <aside class="notes">
+                            Failures of (re)provisioning have various independent sources, guaranteeing there is something new to learn every day about how they can break. Multiply this by the various servers that may all do the same thing, such as updating <code>github.com</code> in the SSH <code>known_hosts</code> file. And you got lots of failing builds (or crons) to fix, every day.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <img src="img/what-if-i-told-you-there-are-too-many-naval-metaphors-in-this-talk.jpg" />
+                        <aside class="notes">
+                            You can see where this is going...
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Problem: time</h2>
+                        <img src="img/test-journal.png" />
+                        <aside class="notes">
+                            The second problem is the time it takes to propagate change such as deployments or upgrade of system software across the various environments and services.
+                            Each combination of service and deployment needs to re-execute the same steps. You can parallelize them a bit across the same environment, but you don't necessarily want to deploy to `prod` before having been through all the testing environments. And the more you parallelize the more failures you may have to deal with at the same time, as per the previous point.
+                            You can try not do to as much as possible when `just` deploying code - but it's just hiding some of the maintenance work under the carpet.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Problem: cost</h2>
+                        <aside class="notes">
+                            Besides the duplication of work across all of these servers, there is an operating cost problem, mostly related to the CPU and memory time they are using. You may have a service sitting at low utilization for weeks, but still running on a single VM per environment that can't be made arbitrarily small. There is the overhead of running the OS for example, plus changing the size of the instances is not something that can be done very easily: it requires an infrastructure intervention, usually a change of templates followed by reboot. Not something you'd automate, in fact people rather set up autoscaling relying on many smaller instances rather than customizing a few fixed ones.
+                        </aside>
+                    </section>
+
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Trade-offs</h2>
+                        <ul>
+                            <li>Build time: <code>gcc ...</code></li>
+                            <li>Deployment time: <code>scp app.tgz ...</code></li>
+                            <li>Startup time: open a database connection</li>
+                            <li>Run time: most cache population</li>
+
+                        </ul>
+                        <aside class="notes">
+                            Many application tasks can be moved arbitrarily between some of these phases due to design decisions.
+                            What we are trying to do here is to move some of the work up the chain, since build time usually only counts for one in web applications unless you have many variants e.g. platforms to support.
+                            Normally most of the system-related work is performed at deployment time, or even later. So you don't see it failing unless you have good monitoring in place, and it can bear surprises. And it happens over and over, many times per day across "mutable" servers.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Solution: Immutable servers</h2>
+                        <a href="https://martinfowler.com/bliki/ImmutableServer.html"><img src="img/phoenix.png" /></a>
+                        <aside class="notes">
+                            One possible solution of course, is to adopt immutable servers that do not change over their lifetime. The build time artifact is a machine image (AMI on AWS) that gets rebuilt from scratch on each change that needs to be applied, whether it is application code or a system package.
+                            This is perfectly doable with enough oiling of the Continuous Delivery pipelines, but it is heavyweight. Machine images take a relatively long time to produce, and to provision as new servers. There isn't much of a standard for providing them with configurations and secrets at deployment time, apart from modifying files.
+                            Last but not least, this doesn't solve cost in the long run as you're still stuck with many servers per project. It is a practice that came up organically in the industry, but one generation ago (the linked article that codifies thisis from 2013).
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Solution: Container images</h2>
+                        <aside class="notes">
+                            Container images are designed (intentionally or not) to be the perfect solution to this problem.
+                            Not only they are immutable, but in the Docker incarnation they have a caching system that helps rebuilding only the layers that have actually changed (though invalidation of this is not perfect as base images change all the time).
+                            There is a standard for attaching to containers volumes for data persistence or configuration files. Services are decomposed into different containers which is yet another direction for reuse.
+                            Container images as build artifacts are a forward-looking solution. They are a standardized and cross-language format, and they can eventually deliver on the cost problem by being deployed inside an orchestrator over anonymous servers. Though let's not get ahead of ourselves, this last part is easier said than done inside a brownfield architecture.
+                        </aside>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>The path</h2>
+                        <img src="http://fitdocs.com/wp-content/uploads/2015/09/path-to-success.jpg" />
+                        <aside class="notes">
+                            The path to deploying container images looks straightforwards, but only if you are in a new environment and can afford a couple mounths of instability while you sort out deployment and monitoring issues.
+                            Let's start from a simple environment, development, where we cannot break too many things.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Building an image locally</h2>
+                        <ul>
+                            <li><code>docker build</code></li>
+                            <li><code>docker-compose build</code></li>
+                        </ul>
+                        <aside class="notes">
+                            The first quick win is to start building an image locally. This image may double as something you use to run the service to experiment with it, or to run its automated tests.
+                            The main challenge here is to find a stable base to build on - usually a Docker-maintained image like `php` or `python`. You may need to add some setup to these images that allow your team's conventions to be maintained: users, standard folders, packaging tools.
+                            You can apply various optimization steps in this phase like multi-stage builds - however they can also be postponed for later as the output of this phase won't change. Whatever the intermediate builder or packaging images, the end result will be a single image (possibly a couple) representing the project.
+                            Very soon I try to use docker-compose to organize the images that are being built and the ones that are being pulled, and to start them in the right order.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Building an image in CI</h2>
+                        <ul>
+                            <li><code>docker-compose -f docker-compose.yml -f docker-compose.ci.yml</code></li>
+                            <li><code>docker-compose.override.yml</code></li>
+                        </ul>
+                        <aside class="notes">
+                            Building an image is a task that should be inherently portable, requiring only the source code repository (or at least what goes into the build context) and the Docker daemon.
+                            We separate the configuration into three files: `docker-compose.yml` is common whereas `docker-compose.ci.yml` is used only in CI by explicitly specifying both files. Locally, the default behavior without any `-f` flag is to use `docker-compose.yml` and `docker-compose.override.yml`, for us a committed file.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Run project tests using the image</h2>
+                        <code>docker-compose -f ... run --rm app ./project_tests.sh</code>
+                        <code>docker cp project_app_run_1:/app/build/ build/</code> for artifacts
+                        <aside class="notes">
+                            Once you have a stable build in CI, you can take advantage of that to reliably run tests. This means being able to reproduce the CI environment and the tests failures very easily. However, from a system administration point of view it absolves the Jenkins nodes (or whatever you are using to run tests) from having to know the environment, outsourcing all of it to the Dockerfile. Now that environment is maintained by the developers of the project: it can diverge from what you'd like but that's the price to pay to avoid having to set it up on a special server for each project.
+                            For example, consider a database: whereas you could run `postgres` on a `myproject--ci` server, in this case it would be an anonymous container that is run as part of the `docker-compose` configuration. It will be cleaned up at the end of the build and will be isolated from the server, avoiding making it drift with all the various tweaks the tens of different projects would want to make.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Disk space</h2>
+                        <aside class="notes">
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Push the image</h2>
+                        <code>docker login</code>
+                        <code>docker tag</code>
+                        <code>docker[-compose] push</code>
+                        <aside class="notes">
+                            Once tests are running reliably, to allow the image to be reused across environments it's necessary to push it to a registry. Even if Docker Hub is configured as a default registry, it will still need credentials for your user or organization to allow new images to be pushed to it.
+                            You might as well set up an alternate registry like AWS Elastic Container Registry, however I haven't found a significant difference in performance for our use case; that would really be the selling point. Also, you would need to set it up on nodes that only pull images.
+                            You can use either `docker-compose push` or directly `docker push` which gives you more control on only pushing what you want. Sometimes you may want to tag images according to some convention and pushing those instead; usually most of this configuration can leave within `docker-compose`.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Deploy an unused container...</h2>
+<pre><code>services:
+    app:
+        image: elifesciences/myservice:${IMAGE_TAG}
+        volumes:
+            "./app.cfg:/myproject/app.cfg"
+        ...
+                        </code></pre>
+                        <aside class="notes">
+                            Using the new container image in a real environment will need a new `docker-compose.yml` that doesn't `build` anything but instead only specifies `image`. The image will then automatically be pulled, especially if a new tag like the original commit sha1 is specified.
+                            An obvious point is that the docker daemon and probably docker-compose need to be installed on the server you want to deploy to.
+                            An important point is you don't necessarily need to route live traffic (or any workload) to the new container yet. You can just run it, and test it with manual calls to explore how it behaves in the new environment.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>...to multiple environments</h2>
+                        <img src="img/test-journal.png" />
+                        <aside class="notes">
+                            Assuming the container is correctly running, you can propagate it across various environments including production. There are many things that it's easy to get wrong here, from passing in credentials to specifying the right host and port of the database you want to connect to.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Switch traffic towards the containers</h2>
+                        <a href="https://martinfowler.com/bliki/CanaryRelease.html"><img src="img/canary-release.png"></a>
+                        <aside class="notes">
+                            Once you have the existing processes running on all environment along with the newly created containers, you can progressively switch traffic from one to another.
+                            For microservices, a binary switch like a boolean configuration flag can be enough in some cases. For large services, you may want to do this on one server at a time, with the assumption that the larger they are the more servers they are deployed to.
+                            This switch may be as simple as having a front nginx talk to different ports - the host-based service or the port forwarded to the container.
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Realize this was just the start</h2>
+                        <img src="img/kubernetes.svg" />
+                        <aside class="notes">
+                            https://twitter.com/kelseyhightower/status/1125440400355782657
+                        </aside>
+                    </section>
+                </section>
+
+                <!--
+- deploy the image to the VM for an environment
+-- docker-compose configuration different from the one in the project (e.g. no build: just image:) and only one file usually
+-- provide configuration files and secrets from the host
+- start transitioning traffic/workloads from the installed-on-VM to the running-container-on-VM
+-- can run on different port and actively deploy both
+-- then deploy a switch from one to another
+-- proceed by enviroment
+-- cleanup old files like the Git repository
+
+- realize the journey is just the start: Kubernetes will require to port common infrastructure inside the orchestrator e.g. logging
+-- scheduling containers according to CPU / memory requests
+- many services required
+-- ingresses to make it available outside of the cluster
+-- providing secrets, Vault?
+-- centralized logging
+-- monitoring of nodes and/or of the Pods
+
+
+                -->
+                <section>
+                    <h1>Thanks!</h1>
+                </section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				history: true,
+
+				// More info https://github.com/hakimel/reveal.js#dependencies
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,57 @@
+- start: fleet of highly customized EC2 instances
+-- one per service
+-- one per environment a service is deployed to
+-- sometimes two, redundancy and/or scaling
+- problem 1: maintenance
+-- Puppet/Chef/Salt running every day
+-- all sorts of failures
+--- APT key has expired
+--- package (a certain patch version that is pinned) has been removed from repositories
+--- remote host doesn't answer/times out
+-- multiplied by the various servers that may do the same thing
+- build time vs deployment time
+-- build artifacts that can be deployed easily
+-- solve the problems once at build time rather than in each enviromnent/service
+- problem 2: time
+-- pipeline takes minutes to go over a server and re-run all the updates before deploying new code
+-- you could not do that and just change the code - but still needs to be done in the background
+- problem 3: cost
+- solution a: AMI
+-- doable, but
+--- no standard to provide configuration/secrets to them
+--- unwieldly: takes a certain time to create one and to launch a new instance
+--- wouldn't really solve cost
+- solution b: container images
+-- lightweight
+-- focuses on a single service at a time / independent reuse
+-- standard ways to pull and run on various nodes
+-- need an orchestrator to bin pack containers onto resources without the various overheads of running the OS in each
+
+- the path
+- start building Docker images locally
+-- docker build, docker-compose build
+- start building them in CI
+-- docker-compose -f docker-compose.yml -f docker-compose.ci.yml build, docker-compose.override.yml
+- run the project tests in CI within the image
+-- docker-compose run app ./project_tests.sh
+-- docker cp project_app_1:/app/build/ build/ for artifacts
+- push the image
+-- all open source for us, so Docker Hub
+-- need to setup credentials to push to any registry
+-- AWS ECR, similar for other providers
+- deploy the image to the VM for an environment
+-- docker-compose configuration different from the one in the project (e.g. no build: just image:) and only one file usually
+-- provide configuration files and secrets from the host
+- start transitioning traffic/workloads from the installed-on-VM to the running-container-on-VM
+-- can run on different port and actively deploy both
+-- then deploy a switch from one to another
+-- proceed by enviroment
+-- cleanup old files like the Git repository
+
+- realize the journey is just the start: Kubernetes will require to port common infrastructure inside the orchestrator e.g. logging
+-- scheduling containers according to CPU / memory requests
+- many services required
+-- ingresses to make it available outside of the cluster
+-- providing secrets, Vault?
+-- centralized logging
+-- monitoring of nodes and/or of the Pods
