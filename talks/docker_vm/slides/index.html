@@ -214,8 +214,8 @@
 
                     <section>
                         <h2>Run project tests using the image</h2>
-                        <code>docker-compose -f ... run --rm app ./project_tests.sh</code>
-                        <code>docker cp project_app_run_1:/app/build/ build/</code> for artifacts
+                        <p><code>docker-compose -f ... run --rm app ./project_tests.sh</code></p>
+                        <p><code>docker cp project_app_run_1:/app/build/ build/ # for artifacts</code></p>
                         <aside class="notes">
                             Once you have a stable build in CI, you can take advantage of that to reliably run tests. This means being able to reproduce the CI environment and the tests failures very easily. However, from a system administration point of view it absolves the Jenkins nodes (or whatever you are using to run tests) from having to know the environment, outsourcing all of it to the Dockerfile. Now that environment is maintained by the developers of the project: it can diverge from what you'd like but that's the price to pay to avoid having to set it up on a special server for each project.
                             For example, consider a database: whereas you could run `postgres` on a `myproject--ci` server, in this case it would be an anonymous container that is run as part of the `docker-compose` configuration. It will be cleaned up at the end of the build and will be isolated from the server, avoiding making it drift with all the various tweaks the tens of different projects would want to make.
@@ -289,6 +289,7 @@ docker[-compose] push
                         <h2>Realize this was just the start</h2>
                         <img src="img/kubernetes.png" style="width: 50%; height: 50%" />
                         <aside class="notes">
+                            Kelsey Hightower, Kubernetes lead, tweeted this recently. But I already knew this from one year ago...
                         </aside>
                     </section>
 
@@ -299,6 +300,7 @@ docker[-compose] push
                             <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
                         </div>
                         <aside class="notes">
+                            Can you "cobble together" enough to start building Docker images and use them in production *before* switching to an orchestrator? You may want to leap frog the step described in this case study, but remember it's not just migrating an application but also building knowledge into your team about how to operate (deploy, monitor, troubleshoot...) in that new environment.
                         </aside>
                     </section>
 
