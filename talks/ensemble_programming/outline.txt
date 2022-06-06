@@ -1,0 +1,55 @@
+From soloists to ensemble 
+- initial slide: musical ensemble picture
+- who am I
+- context (where am I?)
+-- cross-functional team: developers with specialisms, product manager, outreach/marketing person
+--- plus designer, data scientist
+-- TypeScript, container-based infrastructure, monorepo
+- a definition
+-- working on the same thing at the same time
+-- anything that happens is verbalized first through a navigator
+- metaphors
+-- driver/navigator(s)
+-- swarm
+-- ensemble
+- Collective Code Ownership
+-- continuous code review over rework on feature branches
+-- widen bus factor* (negative connotation) over knowledge silos
+-- multiple contributions for a better result over not stepping on each other's toes
+-- how to work outside the mob? research and spikes, summarize knowledge to bring back
+- a laboratory for team dynamics
+-- storming and norming
+--- adjustment to a day of constant interaction; outlets for breaks and solo hours
+-- psychological safety
+--- higher in the ensemble that in a wider group; let most of the problems be raised in context rather than in a dreaded 121 at the end of the week
+-- Fear Of Missing Out
+-- ideal for leaders (not just managers) to observe group dynamics that would be hidden in ad-hoc meetings or tickets
+- energy levels* (not sure where to fit this)
+-- from 2 to 5 people; what hats can be worn in addition to driver and navigator
+--- observing process; observing people; see file:///home/giorgio/benne-sheats-group-roles-task-personal-dysfunctional-toolshero.jpg
+- the remoteness of it
+-- driver: is sharing their screen
+-- navigator: is explicitly collecting group input and directing the driver
+-- everyone has their own screen, OS, keyboard, mouse, chair, ... so much simpler than in person
+--- and everyone is on equal footing; no hybrid 2 people in a room and 2 people remote as it complicates communication
+-- never run out of physical resources e.g. whiteboard space and marker, post its
+--- related: reduced friction in writing lots of post its and throwing them away to support reasoning or communication
+-- overlapping voices: contention of the single audio medium is possible
+--- corollary: someone might hear overlapping voices where you don't. Experience is even more personal
+-- no side conversations; impacting workshops rather than ensemble/navigator work
+- methodology
+-- resonance with XP
+--- Communication is synchronous and constant
+--- Simplicity comes from a diverse (in background, specialism, seniority) team looking for the simple, not easy, solution
+-- resonance with Lean
+--- eliminate partially done work, handoffs from one person to the next
+--- no task switching: one-piece flow; minimize waiting times
+--- "unteaming"/scatter-gather
+- recruitment&onboarding
+-- range of non-technical skills to look for
+--- (verbal) communication; collaboration; behaviors that aid psychological safety
+-- interview process
+--- include ensembling after an initial screen
+-- work in the ensemble from first days
+--- feedback: makes you feel part of the team
+--- covers the pull-based and not the curriculum-based part
