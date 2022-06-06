@@ -76,8 +76,8 @@
                         <h2>2017</h2>
                         <img src="img/despacito.jpg" style="width: 90%" />
                       <aside class="notes">
-                          This story starts a while ago, in 2017. Microservices are still a new kid on the block, and everyone is debating whether a monolith or Python applications containing 100 lines of code... are the solution to all problems.
-                          One Bitcoin is worth $20,000 at some point. And the "fifth best Latin song of all-time" is released and immediately and tops the charts.
+                          This story starts a while ago, in 2017. Microservices are still a new kid on the block, and everyone is debating whether a monolith or Python applications containing 100 lines of code... are the solutions to all problems.
+                          One Bitcoin is worth $20,000 at some point. And the "fifth best Latin song of all-time" is released and immediately tops the charts.
                       </aside>
                     </section>
                         
@@ -182,12 +182,13 @@
                     <section>
                         <img src="img/terraform.png" />
                       <aside class="notes">
-                          Here comes Terraform. It has surged in the last years as a cloud-agnostic tool that allows you to declare resources, calculate a diff against the real state of infrastructure, and apply it to bring.
+                          Here comes Terraform. It has surged in the last years as a cloud-agnostic tool that allows you to declare resources, calculate a diff against the real state of infrastructure, and apply it.
                           If you compare it to CloudFormation, it started out as less mature but really shows the flexibility of its workflow: you first generate a *plan* that describes what the diff will create, update and destroy. Dependencies are calculated so that A is created before B if B needs A, but you can influence that process with some attributes like `create_before_destroy`. You can even *import* infrastructure that was not originally created by Terraform, slowly bringing under Infrastructure As Code the cowboy coding of the consultant that first created an application.
                           There's always a consultant that opens the AWS console, randomly creates things and hands you an application whose dependencies no one knows.
                       </aside>
                     </section>
 
+                    <!--
                     <section>
                         <img src="img/cloudformation.png" />
                       <aside class="notes">
@@ -211,6 +212,7 @@
                           However, this works: in days we had a prototype of a server (Amazon EC2, hence CloudFormation), used as the origin of a Fastly CDN (Terraform), which has a CNAME entry (on our Amazon Route53, hence CloudFormation).
                       </aside>
                     </section>
+                    -->
                 </section>
 
                 <section>
@@ -228,7 +230,7 @@
                         <img src="img/mass-production.jpg" />
                       <aside class="notes">
                         Once you have a declarative description of an environment, you can parameterize it to create testing environments that stay in sync with the production one.
-                        In the case of a CDN, you will have the exact same configuration, but customize the domain (`end2end--journal.elifesciences.org` or `staging--journal.elifesciences.org`) and the origin possible.
+                        In the case of a CDN, you will have the exact same configuration, but customize the domain (`end2end--journal.elifesciences.org` or `staging--journal.elifesciences.org`) and the origin possibly.
                       </aside>
                     </section>
 
@@ -295,9 +297,11 @@ if (req.url.path == "/submit") {
 						Here's an example of how VCL looks like. What this does isn't important - it performs A/B testing via a redirect that happens on certain random conditions. What matters is how this gets stored and applied to a real CDN.
 						Terraform has a concept of `data sources` that can provide configuration values for any resource that it is creating. One of these data srources is the `template file`, so each of these snippets can be an independent file that is linked by the Terraform resources.
 						You can see from the presence of variables like `referer`, `percentage`, and `xpub_uri`: these templates may not be just static files but can be interpolated with variables that come from other data sources. This is very flexible: we have some VCL related to error pages that fills in the HTML body of the error response with an HTML retrieved from a canonical URL (yet another kind of data source).
+                        So, with enough support from Infrastructure as Code tools we need not fear updating CDN "stored procedures"; and we can apply them to testing environments before going in production.
                       </aside>
                     </section>
 
+                    <!--
                     <section>
 						<ul>
 							<li>0.1.0 (June 20, 2017) Same functionality as that of Terraform 0.9.8. Repacked as part of Provider Splitout</li>
@@ -314,6 +318,7 @@ if (req.url.path == "/submit") {
                           We were less lucky with logs: since BigQuery support was not implemented, we delivered to Google Cloud Storage which is on the same cloud provider at least. However we had to run a background job to index that content into BigQuery, which became costly over time and was also removing the possibility to see logs in real time (running it every hour or so). When a newer version of the Terraform Fastly provider came out we switched quickly and removed the duct tape solution.
                       </aside>
                     </section>
+                    -->
 
                     <section>
                         <h2>Commits per developers</h2>
@@ -368,3 +373,10 @@ Developers contributing to the Infrastructure as Code layer, by commits
 		</script>
 	</body>
 </html>
+<!--
+    - good body language
+    - change pie chart to bar chart to show long tail
+    - change simpson image
+    - change cars image to avoid overlapping of testing meaning
+    - touching keyboard accidentally distracting, should not have hands near it when not needed
+-->
