@@ -9,12 +9,12 @@ From soloists to ensemble
 -- TypeScript, container-based infrastructure, monorepo
 
 A DEFINITION
--- working on the same thing at the same time
--- anything that happens is verbalized first through a navigator
-- metaphors
--- driver/navigator(s)
--- swarm
--- ensemble
+++ working on the same thing at the same time
+++ anything that happens is verbalized first through a navigator
++ metaphors
+++ driver/navigator(s)
+++ swarm
+++ ensemble
 
 A LABORATORY FOR TEAM DYNAMICS
 -- storming and norming
@@ -24,8 +24,8 @@ A LABORATORY FOR TEAM DYNAMICS
 -- Fear Of Missing Out
 -- ideal for leaders (not just managers) to observe group dynamics that would be hidden in ad-hoc meetings or tickets
 -- ENERGY LEVELS* (not sure where to fit this)
---- from 2 to 5 people; what hats can be worn in addition to driver and navigator
----- observing process; observing people; getting information or requesting it, etc see file:///home/giorgio/benne-sheats-group-roles-task-personal-dysfunctional-toolshero.jpg
++++ from 2 to 5 people; what hats can be worn in addition to driver and navigator
+++++ observing process; observing people; getting information or requesting it, etc see https://trello.com/c/Dj7bS8q2/107-mob-programming-roles-patterns-and-rpg
 
 BRIDGE: but what if it's remote?
 
