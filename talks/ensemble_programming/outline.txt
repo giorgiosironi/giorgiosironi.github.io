@@ -32,6 +32,8 @@ BRIDGE: but what if it's remote?
 THE REMOTENESS OF IT
 ++ driver: is sharing their screen
 +++ everyone has their own screen, OS, keyboard, mouse, chair, ... so much simpler than in person
+--- meeting room chairs are bad
+--- squinting around a screen is bad, but it can happen in both cases depending on monitor resolutions
 ++ navigator: is explicitly collecting group input and directing the driver
 +++ and everyone is on equal footing; no hybrid 2 people in a room and 2 people remote as it complicates communication
 ++ never run out of physical resources e.g. whiteboard space and marker, post its
