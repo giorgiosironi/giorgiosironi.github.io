@@ -114,38 +114,36 @@
           <section>
             <header>Driver</header>
             <ul>
-              <li>is sharing their screen</li>
-              <li>has the only keyboard and mouse</li>
-              <li>uses their favourite IDE, setup, and chair</li>
-              <li>might not see all faces</li>
+              <li class="fragment">is sharing their screen</li>
+              <li class="fragment">has the only keyboard and mouse</li>
+              <li class="fragment">uses their favourite IDE, setup, and chair</li>
+              <li class="fragment">might not see all faces</li>
             </ul>
+            <aside class="notes">In a physical space, there is usually a single workstation attached to a projector; the driver has to adapt to a new keyboard, maybe IDE. In a remote space, it's more about individual people sharing their environments than everyone adapting to a lowest common denominator.</aside>
           </section>
           <section>
-            <header>Navigator</header>
+            <header>(Designated) Navigator</header>
             <ul>
               <li>is explicitly collecting group input</li>
             </ul>
-            <aside class="notes">Does anything really change for the Navigator?</aside>
+            <aside class="notes">Does anything really change for the Navigator? The hard problem here is one of group coordination and synthesis of actions at the right level of detail. This is very verbal and visual, like seeing body language.</aside>
           </section>
+          <!--
           <section>
-            <header>(All of) the ensemble</header>
-            <ul>
-              <li>is representing decisions and tasks with infinite number of digital post its of any color and size on an infinite whiteboard</li>
-              <li>observes people through webcams</li>
-              <li>explicitly calls onto a next person to talk if they haven't yet</li>
-            </ul>
+            <aside class="notes">Observing people through webcams is different than looking at them in the physical world, but it usually produces a consistent experience from one day to the next.</aside>
           </section>
+          -->
           <section>
             <img src="images/digital_whiteboard.png">
-            <aside class="notes">Digital-only: shared across the ensemble, open to real-time collaboration, infinite in size, infinite post its, heterogeneous (screenshots and icons and text and post its), lowest friction to represent tasks/options/decisions visually</aside>
+            <aside class="notes">Digital-only boards are wonderful: shared across the ensemble, open to real-time collaboration, infinite in size, infinite post its, heterogeneous (screenshots and icons and text and post its), lowest friction to represent tasks/options/decisions visually. They solve the problem of visualizing process, as every action we take starts from some place on that board and everyone is continuously looking at it.</aside>
           </section>
           <section>
             <img src="images/Loudspeaker.arp.500pix.jpg">
             <aside class="notes">
-              In an ensemble, whether it's violinists or software developers, there is contention for one communication medium: the single audio channel. This is true in person, but even more true in a video call where there can be no easy side-conversations.
-              Overlapping voices
-              --- corollary: someone might hear overlapping voices where you don't. Experience is even more personal
-              -- no side conversations; impacting workshops rather than ensemble/navigator work
+              The flip side of an infinite visual medium. In an ensemble, whether it's violinists or software developers, there is ironically contention for one communication medium: the single audio channel. 
+              In large physical workshops (say Eventstorming) there can be casual side conversations that happen concurrently. This is not possible in a video call unless people are organized with explicit rooms.
+              In the ensembling context, we work a lot on coordination so side conversations are not what we are looking for. We want one conversation, but we need to moderate how to speak. The problem of overlapping voices is exacerbated and experiences vary: due to different latencies, someone might hear overlapping voices where you don't. There's many ways to solve this, for example people explicitly handover to a person that hasn't talked yet: "...and this is what I think of this function. Mark?"
+              I found this experience superior to what we could have achieved going to a meeting room everyday.
             </aside> 
           </section>
         </section>
@@ -159,20 +157,25 @@
             <header>From Scatter-Gather...</header>
             <a href="https://www.industriallogic.com/blog/scatter-gather/" class="r-stretch"><img src="images/everything-partial.png"></a>
             <aside class="notes">
-              In this model, work is broken down into tasks and scattered across a group of people that can't really call themselves a team. Every individual task has no value of its own, and every individual has their own queue of things to do. Maybe they are even measured by how "productive" they are. But reviewing and rework take a long time to happen, and we are optimizing for the utilization of people rather than to achieve a valuable result.
+              This is something you don't want to do. The industrial logic coaches named this anti-pattern to collaboration.
+              In this model, work is broken down into tasks and scattered across a group of specialists people. Every individual task has no value of its own, and every individual has their own queue of things to do. Maybe they are even measured by how "productive" they are. But reviewing and rework take a long time to happen, and we are optimizing for the utilization of people rather than to achieve valuable results.
+              We don't have to work this way.
             </aside>
           </section>
           <section>
             <header>to One-Piece Flow</header>
             <a href="https://www.industriallogic.com/blog/faster-and-more-predictable/" class="r-stretch"><img src="images/swarm.png"></a>
             <aside class="notes">
-              In the swarming model, there are ideally no waiting times as everyone is available in the room to take decisions, even a designer or product manager. Even when someone is unavailable, by working together and building the same shared mental models we get a widened bus factor; there is no silo that is off limits and should not be touched while someone is on vacation.
+              In this swarming model, everyone is around. We select the most important thing to do now. Let's work on it together, finish it and move on to the next.
+              Your specialty might not get completely used all the time. But there are ideally no waiting times as everyone is available in the room to take decisions, even a designer or product manager. Even when someone is unavailable, by working together and building the same shared mental models we get a widened bus factor; there is no silo that is off limits and should not be touched while someone is on vacation.
+              This feels very Lean: reduces WIP in the queues and optimizing for value.
             </aside>
           </section>
           <section>
             <a href="https://chelseatroy.com/2017/04/23/but-isnt-pair-programming-expensive/"><img src="images/pair.webp"></a>
             <aside class="notes">
-              You can get a lot done on your own. But are you the only one that can touch that code, forever? How difficult it feels to have to take all the decisions?
+              Every time you mention pair programming, especially in very hierarchical context, someone will say "isn't it wasteful?"
+              You can get a lot done on your own. But what if there is a lot of work in this area, and we need more people to work on it? Are you the only one that can touch that code, forever? How difficult it feels to have to take all the decisions? And make lots of assumptions to be verified or reviewed later?
             </aside>
           </section>
           <section>
@@ -180,6 +183,7 @@
             <aside class="notes">
               Multiple contributions from an ensemble can lead to a better result. We see this as everyone either contributing or learning. From stepping on each other's toes to making a mosaic of good ideas. You can lose hours on a problem that another person would know how to solve in seconds, or know how to avoid in the first place.
               Needless to say, this goes hand in hand with continuous code review over the rework that would happen on feature branches after comments arrive. It is enabled by trunk-based development, and it allows Continuous Delivery.
+              Where two programmers go faster and product a higher quality result than one, what about three, or four?
             </aside>
           </section>
           <section>
@@ -190,13 +194,21 @@
               <li class="fragment">Just go for a walk</li>
             </ul>
             <aside class="notes">
-              You don't have to be talking continuously, or in a video call, for the rest of your working life. There are problems that are suited to your own exploration or specialty, and where summarizing for the ensemble can be helpful to everyone. It might take the form of talking through some post its, or a branch with half-working code to demonstrate a new technique. But it's important to understand how exhausting it can be to continously interact with other team members with a prolonged, very productive focus.
+              You don't have to be talking continuously, or in a video call, for the rest of your working life. There are problems that are suited to your own exploration or specialty, and where summarizing for the ensemble can be helpful to everyone. It might take the form of talking through some post its, or a branch with half-working code to demonstrate a new technique. But it's important to understand how exhausting it can be to continously interact with other team members with a prolonged, very productive focus. Energy can recouped by solo time, but imagine if you were working alone every day - that would be a nightmare.
             </aside>
           </section>
         </section>
 
         <section>
-          <p class="r-fit-text">Thanks for your attention!</p>
+          <section>
+            <blockquote>
+              All the brilliant people working on the same thing, at the same time, in the same space, on the same computer. -- Woody Zuill
+            </blockquote>
+            <aside class="notes">So this is how we worked for the last two years, with a team growing from three people to seven and some changes along the way, completely remote.</aside>
+          </section>
+          <section>
+            <p class="r-fit-text">Thanks for your attention!</p>
+          </section>
         </section>
       </div>
     </div>
