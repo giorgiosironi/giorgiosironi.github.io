@@ -1,0 +1,257 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>An ensembling approach to making legacy code habitable</title>
+
+    <link rel="stylesheet" href="dist/reset.css">
+    <link rel="stylesheet" href="dist/reveal.css">
+    <link rel="stylesheet" href="dist/theme/beige.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="plugin/highlight/monokai.css">
+
+    <style type="text/css">
+      .credits {
+        font-size: medium;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <section>
+            <h1 class="r-fit-text">
+              An ensembling approach to making legacy code habitable
+            </h1>
+            <p>Giorgio Sironi - Tech Lead</p>
+            <p>(if you're reading this on your laptop, press S for notes)</p>
+            <aside class="notes">
+            </aside>
+          </section>
+          <section>
+            <p>Giorgio Sironi</p>
+            <div style="float: right; width: 20%" />
+              <a href="https://www.linkedin.com/in/giorgiosironi/"><img src="images/me.jpg" style="float: right; width: 100%;" alt="My photo" /></a>
+            </div>
+            <div style="float: left; width: 80%; margin-top: 5%"> 
+              <ul class="build">
+                <li>Tech Lead</li>
+                <li>Problems I work on
+                  <ul>
+                    <li class="fragment">Making software easy to change</li>
+                    <li class="fragment">Helping engineers to do it</li>
+                    <li class="fragment">Growing enough basil and parsley</li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+            <aside class="notes">
+              Whether I am in the role of a senior engineer or as a formal tech lead, I works hands on writing code with everyone else. But I usually dedicate myself to the overlooked problems of the first derivative: non-functional requirements such as testability, maintainability, or performance.
+              Besides growing software, and growing people, I also try to grow some plants. In this phase I find the organic growth metaphor more realistic than all the software engineering ones I've encountered over the years.
+            </aside>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h2>The situation</h2>
+            <a href="https://elifesciences.org/labs/85a7155a/the-running-costs-of-elife-2-0">
+              <img src="images/continuum.jpg" alt="Architectural diagrams of all the moving parts of Continuum, a publishing system for open access scientic papers">
+            </a>
+            <aside class="notes">
+              The organization I work in is making a strategic change and is bringing back in house the flagship product, a scientific journal. It's a set of PHP and Python services powering a Symfony frontend. I have worked on it in the past, but theres not many people with first-hand knowledge in the organization. Because it's been there running mostly smoothly since 2017.
+            </aside>
+          </section>
+          <section>
+            <h2>The situation</h2>
+            <img src="images/php-developer.jpg" alt="You are all PHP developers now" height="400">
+            <aside class="notes">The team I lead has been working for 4 years on a TypeScript product, a web application. The organization, however, is making a strategic change and is bringing back in house the flagship product, a scientific journal. It's a set of PHP and Python services powering a Symfony frontend.</aside>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>Flashback: ensemble programming</h2>
+            <img src="images/Arianna_String_Quartet_(14193354501).jpg" class="r-stretch" alt="A musical ensemble of four players">
+            <p class="credits"><a href="https://commons.wikimedia.org/wiki/File:Arianna_String_Quartet_(14193354501).jpg">Credits</a></p>
+            <aside class="notes">Let's roll back a bit and consider how this team is working, since the idea was to bring the software to a team that's already working well, rather than shuffling people around and having to rebuild all the processes and people dynamics.</aside>
+          </section>
+          <section>
+            <blockquote>
+              All the brilliant people working on the same thing, at the same time, in the same space, on the same computer. -- Woody Zuill
+            </blockquote>
+            <aside class="notes">There are some constraints placed on a group of people to say they are working as a mob. They must be working on the same piece of software. They must be working in the same hours (mostly). They must be in a space where they can communicate synchronously with each other (mostly). And, given how linearizable committing code is, they should all work on a single working copy of a repository at a time.</aside>
+          </section>
+          <section>
+            <blockquote>
+              For an idea to go from someone’s head into the computer, it must go through someone else’s hands. -- Llewellyn Falco
+            </blockquote>
+            <ul>
+              <li class="fragment">Driver: Hands</li>
+              <li class="fragment">Navigators: Heads</li>
+              <li class="fragment">Designated Navigator: Voice</li>
+            </ul>
+            <aside class="notes">Being together doesn't necessarily lead to a productive result without building in some facilitation rules. To make everything that happens explicit and visible, it can be agreed by the group and verbalized to a "naive" driver. A (often quickly) rotating Voice connects the Heads to the Hands, and ensures what's happening is understandable to the group. The Voice having to find consensus across the group on what to do next cannot be underestimated: they are channeling rather than leading.</aside>
+          </section>
+          <section>
+            <img src="images/rally.png" class="r-stretch" alt="A driver and a navigator in a car during a rally">
+            <p class="credits"><a href="http://cameracourage.com/2012/11/what-does-a-rally-co-driver-do/">Credits</a></p>
+            <aside class="notes">Where do these names come from? A rally driver taking instructions from a navigator on where to steer or how fast they can go. Focus either on how much to accelerate and steer, or on the road ahead and what curves are coming. The driver can't go off on their own. Extensible from pair programming to an ensemble.</aside>
+          </section>
+
+          <section>
+            <a href="https://chelseatroy.com/2017/04/23/but-isnt-pair-programming-expensive/"><img src="images/pair.webp" alt="One programmer struggling to climb a hill, and sweating"></a>
+            <aside class="notes">
+              Every time you mention (even just) pair programming, especially in very hierarchical context, someone will say "isn't it wasteful?"
+              You can get a lot done on your own. But what if there is a lot of work in this area, and we need more people to work on it? Are you the only one that can touch that code, forever? How difficult it feels to have to take all the decisions? And make lots of assumptions to be verified or reviewed later?
+            </aside>
+          </section>
+          <section>
+            <a href="https://chelseatroy.com/2017/04/23/but-isnt-pair-programming-expensive/"><img src="images/pair-easier.webp" alt="Two programmers helping each other climb the hill"></a>
+            <aside class="notes">
+              Multiple contributions from an ensemble can lead to a better result. We see this as everyone either contributing or learning. From stepping on each other's toes to making a mosaic of good ideas. You can lose hours on a problem that another person would know how to solve in seconds, or know how to avoid in the first place.
+              Needless to say, this goes hand in hand with continuous code review over the rework that would happen on feature branches after comments arrive. It is enabled by trunk-based development, and it allows Continuous Delivery.
+              Where two programmers go faster and produce a higher quality result than one, what about three, or four?
+            </aside>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>Experiments that worked (or didn't)</h2>
+            <aside class="notes"></aside>
+          </section>
+
+          <section>
+            <h2>How do we make sense of it all?</h2>
+              <img src="images/continuum.jpg" alt="Architectural diagrams of all the moving parts of Continuum, a publishing system for open access scientic papers" class="r-stretch">
+            <aside class="notes">I imagine seeing this architectural diagram again doesn't help much. The same is true for developers tasked with making changes to a system they don't understand yet in its entirety (and perhaps they never will). Lots of upfront onboarding and handover, if available at all, don't provide big returns on the time invested.</aside>
+          </section>
+
+          <section>
+            <h2>Collective ownership of maps</h2>
+            <img src="images/maps.png" alt="A set of maps from projects we were familiar with, but that are collectively owned and understood" class="r-stretch">
+            <aside class="notes">What can work a bit better is to build maps piecemeal, trying to bootstrap one into existence before making the whole team's responsibility to update and *decide what needs to be represented*. These are in a digital whiteboard, not an artifact on the wall or in a repository, they are designed to be changed all the time as much as to be read.</aside>
+          </section>
+
+          <section>
+            <h2>Deploy a change on day 1</h2>
+            <img src="images/convincingly.png" alt="A piece of UI showing the first task, a bug fix" class="r-stretch">
+            <aside class="notes">A classic onboarding pattern when joining a new team or organization: make a small change and follow it through the processes of code review, QA, deployment until you can see it in production. Lets you discover what supporting system are in place, what is the model for contribution, all while removing the variable of getting software design right for a new feature. In our team's case, it was a bug fix on a UI label that should have been highlighted in the presence of a derived word, "convincingly", rather than just for the original adjective "convincing".</aside>
+          </section>
+
+          <section>
+            <h2>Torchlight feature</h2>
+            <img src="images/torchlight.jpg" alt="A feature that requires work across backend and frontend" class="r-stretch">
+            <aside class="notes">Develop a feature where there isn't great uncertainty in design, and making change to more than one repository or service is required. Develop outside in from the UI downwards to only write necessary code. Similar to the walking skeleton in spirit, as it aims to remove the integration risks. Prevent unnecessary work though, as we start to optimize the developer experience where we are feeling the pain. So it's less about delivery, and more about using this delivery as an opportunity to improve tooling and processes (as we should always be doing).</aside>
+          </section>
+
+          <section>
+            <h2>Trunk-based development</h2>
+            <img src="images/trunk_based_development.jpg" class="r-stretch">
+            <aside class="notes">
+              Enabled by the code review provided constantly by the ensemble working together. Improvements in code design or developer tooling become available to everyone else immediately, and this compounds over time. One project we opened had about 40 pull requests - that is time spent that will never be realized as value, neither to users nor the business.
+            </aside>
+          </section>
+        </section>
+
+        <section>
+
+          <section>
+            <h2>Agile is sooner, not faster</h2>
+            <p><img src="images/agile_sooner.png" alt="Agile software development delivering increments of value over time, rather than a discontinuity" class="r-stretch"></p>
+            <p class="credits"><a href="https://www.engineeringforhumans.com/agile/agile-isnt-faster/">Credits</a></p>
+            <aside class="notes">
+              In waterfall (more a theoretical thing) you work in the dark for a certain amount of time, then you deliver. You only need to e.g. test, or deploy successfully, once. Realized value is usually lower because we got something wrong and we can't incorporate the feedback as we spent all available time or budget.
+              In agile processes, we deliver increments and so some value is delivered sooner. It doesn't mean that we code/test/deploy necessarily faster. But we can respond to feedback. Yet we have transaction costs on running tests every few seconds, or deploying tens of times per day.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Lowering transaction costs</h2>
+            <p>
+              <img src="images/agile_sooner.png" alt="Agile software development delivering increments of value over time, rather than a discontinuity" height="300">
+              <img src="images/agile_sooner_and_faster.png" alt="" height="300">
+            </p>
+            <aside class="notes">
+              Lowering transaction costs makes you spend less time on each commit, test cycle, or deployment.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Rate of change</h2>
+            <blockquote>
+              A software system’s first derivative is its build and deployment toolchain. -- Gregor Hohpe in "The Software Architect Elevator"
+            </blockquote>
+            <aside class="notes">
+              Agile coaches rightly say "you need to constantly refactor and keep the internal quality high to remain Agile". Keeping the cost of change low is a major objective in incremental development, even if the requirements don't end up changing.
+              Before even talking about delivering new features, however we need to have local exploratory testing and a feedback loop of checks that enables us to commit changes safely. You can't even refactoring to make changes easier if you can't run the tests.
+            </aside>
+          </section>
+
+          <section>
+            <h2>In practice</h2>
+              <ul>
+                <li class="fragment">
+                  <code>make check</code>: running a subset of fast tests and static checks, that will also run in CI
+                </li>
+                <li class="fragment">
+                  <code>make dev</code>: exploratory testing to reproduce a behavior locally
+                </li>
+                <li class="fragment">
+                  <code>make prod</code>: like <code>dev</code> but with a (reasonable subset of) production data for higher fidelity
+                </li>
+                <li class="fragment">
+                  They should be portable, running on everyone's machine.
+                </li>
+              </ul>
+          </section>
+          <aside class="notes">
+          </aside>
+        </section>
+
+
+        <section>
+          <section>
+            <h2>Results</h2>
+              <ul>
+                <li class="fragment">
+                  From 1 [big] to 20-30 [small] commits per day, on the trunk
+                </li>
+                <li class="fragment">
+                  Delays of pull requests (1 day to months) and reviews eliminated
+                </li>
+                <li class="fragment">
+                  Developers in the team at all levels of seniority can now navigate someone new to perform a change
+                </li>
+            <aside class="notes"></aside>
+          </section>
+
+          <section>
+            <p class="r-fit-text">Thanks for your attention!</p>
+          </section>
+        </section>
+
+      </div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script>
+      // More info about initialization & config:
+      // - https://revealjs.com/initialization/
+      // - https://revealjs.com/config/
+      Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,83 @@
+# situation
+- current systems
+-- developed in house ca. 2017
+-- progressively outsource to consultancy companies as a cost center
+-- eventually strategy shifted to being the flagship product again
+-- PHP (and Python) microservices
+--- PHP 7.0-7.3
+--- but also symfony 3, PHPUnit 5...
+--- and related libraries
+--- projects with 40 open pull requests
+- team makeup, seniority, background, specialisms
+-- but it's gelled
+-- mostly I'm the only one having written PHP code before: we know JavaScript, TypeScript, as a team
+-- help from staff engineer
+
+# flashback: ensembling in a nutshell
+-- driver, navigator, other roles; rotation
+-- screen share, push on commit
+-- common visualization and materials
+--- Miro frames
+--- diagrams: static code locations, runtime for how components communicate with each other, deployment for where it all runs
+--- testing material
+-- what about the small cycle (a commit) and the large cycle (closing a ticket)
+
+
+# patterns/ideas (split across)
+- taking software to the team rather than distributing the people
+- swarm on the merge, helping the lone developer
+- building reference diagrams (senior responsibility: me)
+- make it easy to write a new test
+- observe a deployment process and react to the unforeseen.
+- see one, do one, teach one
+-- Germane cognitive load
+-- rotations of navigation and driving is present to break down the silos of knowledge and get to an ensemble that makes steady progress in any conditions.
+- team's sense of purpose decoupled from the product
+- wasteful vs being blocked/unsure: it is more likely for at least one person with context/knowledge/skill to be in the room in an ensemble; therefore it makes progress rather than waiting on questions/clarification/review
+- didn't work: include a part time member
+-- simultaneously learning the practices of ensembling and the new technology
+- worked: include a staff engineer
+-- only learning the practices of ensembling
+- worked: developing a feature that is contained in a single codebase (plus libraries)
+- didn't work: moving between codebases a lot
+- worked: outside in
+-- example?
+-- worked: some design up front (API schema) with a staff engineer
+--- iterated through 3 options in the space of a day, before implementing one that would give low cost options for changes
+- worked: developing a feature that has upfront design
+
+# habitability
+-- make a commit, trunk-based development
+-- the `make check|test` loop
+-- optimize for frequency of change, because that is what enables refactoring
+-- `make clean` the dev environment
+-- reproducibility: Apple Silicon
+- from pull requests to trunk-based development
+- from waiting for Jenkins on a branch to fast tests feedback
+- exploratory testing
+- `make check` but also `make dev`
+-- case in point: portability to Apple M1 series
+- remote-first team
+- ensemble programming (only seldom pairing)
+-- synchronous communication
+- single piece flow
+
+# results
+-- from 1 to 20-30 commits per day, on trunk
+-- delays of pull requests and reviews eliminated
+-- developers in the team at all levels of seniority can navigate someone new to perform a change
+
+prompts
+- which experiments didn't work?
+- how did you know this worked instead?
+- Is there something you did that lead you to reconsider your approach or opinion?
+- Is there something you’ve worked on where the outcome was surprising or non-obvious?
+- Is there something you absolutely love?
+- have you explained why, not just how/what?
+
+checklist
+- an evocative image for a diverse team?
+-- power rangers
+- any analogies to include?
+- any meme/images?
+- 30-second epilogue after conclusions, to decompress
