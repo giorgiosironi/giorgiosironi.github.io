@@ -74,10 +74,33 @@
 
         <section>
           <section>
-            <h2>Flashback: ensemble programming</h2>
+            <h2>How a team can work together, or alone</h2>
+          </section>
+
+          <section>
+            <a href="https://chelseatroy.com/2017/04/23/but-isnt-pair-programming-expensive/"><img src="images/pair.webp" alt="One programmer struggling to climb a hill, and sweating"></a>
+            <aside class="notes">
+              Every time you mention (even just) pair programming, especially in very hierarchical context, someone will say "isn't it wasteful?"
+              You can get a lot done on your own. But what if there is a lot of work in this area, and we need more people to work on it? Are you the only one that can touch that code, forever? How difficult it feels to have to take all the decisions? And make lots of assumptions to be verified or reviewed later?
+            </aside>
+          </section>
+
+          <section>
+            <a href="https://chelseatroy.com/2017/04/23/but-isnt-pair-programming-expensive/"><img src="images/pair-easier.webp" alt="Two programmers helping each other climb the hill"></a>
+            <aside class="notes">
+              Multiple contributions from an ensemble can lead to a better result. We see this as everyone either contributing or learning. From stepping on each other's toes to making a mosaic of good ideas. You can lose hours on a problem where a front end engineer would frame the problem and set you on the right path in seconds, without even noticing. And you can make decisions that have a wider impact because there is no one else to ask permission to.
+              Code review happens continuously, when the stakes are low (one line to change) rather than in a branch where discussions can arise on something you have spent days on. It is enabled by trunk-based development, and it allows Continuous Delivery.
+              Where two programmers go faster and produce a higher quality result than one, what about three, or four?
+            </aside>
+          </section>
+
+          <section>
+            <h2>Ensemble programming</h2>
+            <p>(formerly known as mob programming)</p>
             <img src="images/Arianna_String_Quartet_(14193354501).jpg" class="r-stretch" alt="A musical ensemble of four players">
             <p class="credits"><a href="https://commons.wikimedia.org/wiki/File:Arianna_String_Quartet_(14193354501).jpg">Credits</a></p>
-            <aside class="notes">Let's roll back a bit and consider how this team is working, since the idea was to bring the software to a team that's already working well, rather than shuffling people around and having to rebuild all the processes and people dynamics.</aside>
+            <aside class="notes">Let's roll back a bit and consider how this team is working, since the idea was to bring the software to a team that's already working well, rather than shuffling people around and having to rebuild all the processes and people dynamics.
+            If I had to describe ensemble programming with reference to something you already know, I would say it's the extension of pairing - if 2 people do a faster/better job, what about 3? But the dynamics are a bit more complicated than that.</aside>
           </section>
           <section>
             <blockquote>
@@ -99,29 +122,15 @@
           <section>
             <img src="images/rally.png" class="r-stretch" alt="A driver and a navigator in a car during a rally">
             <p class="credits"><a href="http://cameracourage.com/2012/11/what-does-a-rally-co-driver-do/">Credits</a></p>
-            <aside class="notes">Where do these names come from? A rally driver taking instructions from a navigator on where to steer or how fast they can go. Focus either on how much to accelerate and steer, or on the road ahead and what curves are coming. The driver can't go off on their own. Extensible from pair programming to an ensemble.</aside>
+            <aside class="notes">Where do these names come from? A rally driver taking instructions from a navigator on where to steer or how fast they can go. Focus either on how much to accelerate and steer, or on the road ahead and what curves are coming. The driver can't go off on their own. Extensible from pair programming to an ensemble. But there are lots more roles team members can play: the Scribe, the Nose, the Researcher...</aside>
           </section>
 
-          <section>
-            <a href="https://chelseatroy.com/2017/04/23/but-isnt-pair-programming-expensive/"><img src="images/pair.webp" alt="One programmer struggling to climb a hill, and sweating"></a>
-            <aside class="notes">
-              Every time you mention (even just) pair programming, especially in very hierarchical context, someone will say "isn't it wasteful?"
-              You can get a lot done on your own. But what if there is a lot of work in this area, and we need more people to work on it? Are you the only one that can touch that code, forever? How difficult it feels to have to take all the decisions? And make lots of assumptions to be verified or reviewed later?
-            </aside>
-          </section>
-          <section>
-            <a href="https://chelseatroy.com/2017/04/23/but-isnt-pair-programming-expensive/"><img src="images/pair-easier.webp" alt="Two programmers helping each other climb the hill"></a>
-            <aside class="notes">
-              Multiple contributions from an ensemble can lead to a better result. We see this as everyone either contributing or learning. From stepping on each other's toes to making a mosaic of good ideas. You can lose hours on a problem that another person would know how to solve in seconds, or know how to avoid in the first place.
-              Needless to say, this goes hand in hand with continuous code review over the rework that would happen on feature branches after comments arrive. It is enabled by trunk-based development, and it allows Continuous Delivery.
-              Where two programmers go faster and produce a higher quality result than one, what about three, or four?
-            </aside>
-          </section>
         </section>
 
         <section>
           <section>
-            <h2>Experiments that worked (or didn't)</h2>
+            <h2>We'd like this new feature</h2>
+            <p>And those other two as well, please</h2>
             <aside class="notes"></aside>
           </section>
 
@@ -144,18 +153,19 @@
           </section>
 
           <section>
-            <h2>Torchlight feature</h2>
-            <img src="images/torchlight.jpg" alt="A feature that requires work across backend and frontend" class="r-stretch">
-            <aside class="notes">Develop a feature where there isn't great uncertainty in design, and making change to more than one repository or service is required. Develop outside in from the UI downwards to only write necessary code. Similar to the walking skeleton in spirit, as it aims to remove the integration risks. Prevent unnecessary work though, as we start to optimize the developer experience where we are feeling the pain. So it's less about delivery, and more about using this delivery as an opportunity to improve tooling and processes (as we should always be doing).</aside>
-          </section>
-
-          <section>
             <h2>Trunk-based development</h2>
             <img src="images/trunk_based_development.jpg" class="r-stretch">
             <aside class="notes">
               Enabled by the code review provided constantly by the ensemble working together. Improvements in code design or developer tooling become available to everyone else immediately, and this compounds over time. One project we opened had about 40 pull requests - that is time spent that will never be realized as value, neither to users nor the business.
             </aside>
           </section>
+
+          <section>
+            <h2>Torchlight feature</h2>
+            <img src="images/torchlight.jpg" alt="A feature that requires work across backend and frontend" class="r-stretch">
+            <aside class="notes">Develop a feature where there isn't great uncertainty in design, and making change to more than one repository or service is required. Develop outside in from the UI downwards to only write necessary code. Similar to the walking skeleton in spirit, as it aims to remove the integration risks. Prevent unnecessary work though, as we start to optimize the developer experience where we are feeling the pain. So it's less about delivery, and more about using this delivery as an opportunity to improve tooling and processes (as we should always be doing).</aside>
+          </section>
+
         </section>
 
         <section>
@@ -181,6 +191,7 @@
             </aside>
           </section>
 
+          <!--
           <section>
             <h2>Rate of change</h2>
             <blockquote>
@@ -191,6 +202,7 @@
               Before even talking about delivering new features, however we need to have local exploratory testing and a feedback loop of checks that enables us to commit changes safely. You can't even refactoring to make changes easier if you can't run the tests.
             </aside>
           </section>
+          -->
 
           <section>
             <h2>In practice</h2>
@@ -227,7 +239,9 @@
                 <li class="fragment">
                   Developers in the team at all levels of seniority can now navigate someone new to perform a change
                 </li>
-            <aside class="notes"></aside>
+            <aside class="notes">
+              The lasting impact is that someone that was onboarded a month ago is now able to onboard a new developer joining the team.
+            </aside>
           </section>
 
           <section>
