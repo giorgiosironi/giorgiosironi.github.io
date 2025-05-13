@@ -62,13 +62,13 @@
               <img src="images/continuum.jpg" alt="Architectural diagrams of all the moving parts of Continuum, a publishing system for open access scientic papers">
             </a>
             <aside class="notes">
-              The organization I work in is making a strategic change and is bringing back in house the flagship product, a scientific journal. It's a set of PHP and Python services powering a Symfony frontend. I have worked on it in the past, but theres not many people with first-hand knowledge in the organization. Because it's been there running mostly smoothly since 2017.
+              The organization I work in is making a strategic change and is bringing back in house the flagship product, a scientific journal. It's a set of PHP and Python services powering a Symfony frontend. I have worked on it in the past, but theres not many people with first-hand knowledge in the organization because of outsourcing. It's been there running mostly smoothly since 2017.
             </aside>
           </section>
           <section>
             <h2>The situation</h2>
             <img src="images/php-developer.jpg" alt="You are all PHP developers now" height="400">
-            <aside class="notes">The team I lead has been working for 4 years on a TypeScript product, a web application. The organization, however, is making a strategic change and is bringing back in house the flagship product, a scientific journal. It's a set of PHP and Python services powering a Symfony frontend.</aside>
+            <aside class="notes">The team I lead has been working for 4 years on a TypeScript product, a web application. Due to the strategy change they are tasked with taking over what is now legacy code.</aside>
           </section>
         </section>
 
@@ -89,7 +89,6 @@
             <a href="https://chelseatroy.com/2017/04/23/but-isnt-pair-programming-expensive/"><img src="images/pair-easier.webp" alt="Two programmers helping each other climb the hill"></a>
             <aside class="notes">
               Multiple contributions from an ensemble can lead to a better result. We see this as everyone either contributing or learning. From stepping on each other's toes to making a mosaic of good ideas. You can lose hours on a problem where a front end engineer would frame the problem and set you on the right path in seconds, without even noticing. And you can make decisions that have a wider impact because there is no one else to ask permission to.
-              Code review happens continuously, when the stakes are low (one line to change) rather than in a branch where discussions can arise on something you have spent days on. It is enabled by trunk-based development, and it allows Continuous Delivery.
               Where two programmers go faster and produce a higher quality result than one, what about three, or four?
             </aside>
           </section>
@@ -99,14 +98,15 @@
             <p>(formerly known as mob programming)</p>
             <img src="images/Arianna_String_Quartet_(14193354501).jpg" class="r-stretch" alt="A musical ensemble of four players">
             <p class="credits"><a href="https://commons.wikimedia.org/wiki/File:Arianna_String_Quartet_(14193354501).jpg">Credits</a></p>
-            <aside class="notes">Let's roll back a bit and consider how this team is working, since the idea was to bring the software to a team that's already working well, rather than shuffling people around and having to rebuild all the processes and people dynamics.
+            <aside class="notes">
+              It's one thing to operate as a violinist and another to be part of a group with different specialties that complete each other, and can work together at the same time for optimal performance.
             If I had to describe ensemble programming with reference to something you already know, I would say it's the extension of pairing - if 2 people do a faster/better job, what about 3? But the dynamics are a bit more complicated than that.</aside>
           </section>
           <section>
             <blockquote>
               All the brilliant people working on the same thing, at the same time, in the same space, on the same computer. -- Woody Zuill
             </blockquote>
-            <aside class="notes">There are some constraints placed on a group of people to say they are working as a mob. They must be working on the same piece of software. They must be working in the same hours (mostly). They must be in a space where they can communicate synchronously with each other (mostly). And, given how linearizable committing code is, they should all work on a single working copy of a repository at a time.</aside>
+            <aside class="notes">There are some constraints placed on a group of people to say they are working as a ensemble. They must be working on the same piece of software. They must be working in the same hours (mostly). They must be in a space where they can communicate synchronously with each other (mostly). And, given how linearizable committing code is, they should all work on a single working copy of a repository at a time.</aside>
           </section>
           <section>
             <blockquote>
@@ -117,7 +117,8 @@
               <li class="fragment">Navigators: Heads</li>
               <li class="fragment">Designated Navigator: Voice</li>
             </ul>
-            <aside class="notes">Being together doesn't necessarily lead to a productive result without building in some facilitation rules. To make everything that happens explicit and visible, it can be agreed by the group and verbalized to a "naive" driver. A (often quickly) rotating Voice connects the Heads to the Hands, and ensures what's happening is understandable to the group. The Voice having to find consensus across the group on what to do next cannot be underestimated: they are channeling rather than leading.</aside>
+            <aside class="notes">Being together doesn't necessarily lead to a productive result without building in some facilitation rules.
+              This does not come through as often in pairing, but to make everything that happens explicit and visible, actions have to be agreed by the group and verbalized to a "naive" driver. A (often quickly) rotating Voice connects the Heads to the Hands, and ensures what's happening is understandable to the group. The Voice having to find consensus across the group on what to do next cannot be underestimated: they are channeling rather than leading.</aside>
           </section>
           <section>
             <img src="images/rally.png" class="r-stretch" alt="A driver and a navigator in a car during a rally">
@@ -131,7 +132,9 @@
           <section>
             <h2>We'd like this new feature</h2>
             <p>And those other two as well, please</h2>
-            <aside class="notes"></aside>
+            <aside class="notes">
+              The business is asking for user visible changes to be delivered. How do we get there?
+            </aside>
           </section>
 
           <section>
@@ -156,7 +159,8 @@
             <h2>Trunk-based development</h2>
             <img src="images/trunk_based_development.jpg" class="r-stretch">
             <aside class="notes">
-              Enabled by the code review provided constantly by the ensemble working together. Improvements in code design or developer tooling become available to everyone else immediately, and this compounds over time. One project we opened had about 40 pull requests - that is time spent that will never be realized as value, neither to users nor the business.
+             One project we looked at had about 40 pull requests - that is time spent that will never be realized as value, neither to users nor the business.
+              Enabled by the code review provided constantly by the ensemble working together. Improvements in code design or developer tooling become available to everyone else immediately, and this compounds over time.
             </aside>
           </section>
 
@@ -187,7 +191,7 @@
               <img src="images/agile_sooner_and_faster.png" alt="" height="300">
             </p>
             <aside class="notes">
-              Lowering transaction costs makes you spend less time on each commit, test cycle, or deployment.
+              Lowering transaction costs makes you spend less time on each commit, test cycle, or deployment, so it's really valuable if you can shave off a few seconds from every test run.
             </aside>
           </section>
 
@@ -217,11 +221,14 @@
                   <code>make prod</code>: like <code>dev</code> but with a (reasonable subset of) production data for higher fidelity
                 </li>
                 <li class="fragment">
-                  They should be portable, running on everyone's machine.
+                  They should be portable, running quickly on everyone's machine.
                 </li>
               </ul>
           </section>
           <aside class="notes">
+            `make check` can be run every few seconds.
+            `make dev` and `make prod` lets us see the effect of changes locally. Easy if it's a monolith but a capability to maintain when there are multiple services to put together or stub.
+            We had an Apple Silicon Mac in the ensemble where old code struggled to run due to the different CPU architecture - portability should not be taken for granted and everyone needs to be able to drive.
           </aside>
         </section>
 
@@ -240,7 +247,8 @@
                   Developers in the team at all levels of seniority can now navigate someone new to perform a change
                 </li>
             <aside class="notes">
-              The lasting impact is that someone that was onboarded a month ago is now able to onboard a new developer joining the team.
+              We improved the product through user visible changes, and the process because we can make many more improvements like refactoring, quickly and safely.
+              But the lasting impact is that someone that was onboarded a month ago from a TypeScript background... is now able to navigate a new developer joining the team, and tell them what PHPUnit tests to write or how to change PHP code.
             </aside>
           </section>
 
